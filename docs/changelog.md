@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] - 2026-11-15
 
 ### Added
+- **專屬手機版面設計（`data-layout="mobile"`）**：
+  - 頂部改為分頁標籤式工具列（`.mobile-toolbar-header`），支援膠囊分頁切換各工具列與收合／展開（`▾` / `▴`）。
+  - 基本排版列於手機版改為單列橫向滑動（`36px` 觸控按鈕），符號與注音列改為可捲動格線鍵盤（`mobile-symbol-grid`）。
+  - 新增底部拇指快捷列（`.mobile-bottom-bar`），提供復原、重做、縮排與純文字／富文字／Markdown 一鍵複製。
+  - 顏色選擇器改為底部置中浮動視窗，設定彈窗改為底部抽屜（Bottom Sheet）樣式，編輯區字級設為 `16px` 防止 iOS Safari 自動縮放。
+  - 支援「自動偵測（`<= 640px`）」、「桌面版面」、「手機版面」切換（設定頁、`?layout=` 參數與 `editor:setConfig` 的 `layoutMode`）。
+- **示範頁手機寬度模擬（`index.html`）**：新增「模擬手機寬度 (375px)」切換按鈕。
 - **全工具列按鈕自訂與分頁設定**：
   - 設定頁面新增分頁（Tabs）架構：「一般設定」、「基本排版」、「中文標點」、「英文標點」、「其他符號」、「注音符號」。
   - 除基本排版外，中文標點、英文標點、其他符號與注音符號工具列亦支援個別按鈕的勾選顯示與拖曳／上下鍵排序，並保留 `localStorage` 設定相容性。

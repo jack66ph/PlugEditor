@@ -134,6 +134,7 @@
       <button type="button" id="btnGetContent">主動取得內容</button>
       <button type="button" id="btnFocus">聚焦編輯器</button>
       <button type="button" id="btnToggleReadOnly">切換唯讀 (目前: 否)</button>
+      <button type="button" id="btnToggleMobileWidth">模擬手機寬度 (375px)</button>
       <label>
         主題：
         <select id="themeSelect">
@@ -229,6 +230,15 @@
       isReadOnly = !isReadOnly;
       btnToggleReadOnly.textContent = `切換唯讀 (目前: ${isReadOnly ? '是' : '否'})`;
       sendToEditor({ type: 'editor:setConfig', readOnly: isReadOnly });
+    });
+
+    const btnToggleMobileWidth = document.getElementById('btnToggleMobileWidth');
+    let isMobilePreview = false;
+    btnToggleMobileWidth.addEventListener('click', () => {
+      isMobilePreview = !isMobilePreview;
+      frame.style.maxWidth = isMobilePreview ? '375px' : '100%';
+      frame.style.margin = isMobilePreview ? '0 auto' : '0';
+      btnToggleMobileWidth.textContent = isMobilePreview ? '恢復桌面寬度 (100%)' : '模擬手機寬度 (375px)';
     });
 
     document.getElementById('themeSelect').addEventListener('change', (e) => {

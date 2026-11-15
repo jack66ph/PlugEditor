@@ -808,6 +808,255 @@
       transform: translateX(-50%) translateY(0);
     }
 
+    /* Mobile Layout Styles */
+    .mobile-toolbar-header {
+      display: none;
+    }
+
+    .mobile-bottom-bar {
+      display: none;
+    }
+
+    [data-layout="mobile"] .editor-shell {
+      border-radius: 6px;
+    }
+
+    [data-layout="mobile"] .toolbars-container {
+      border-top-left-radius: 6px;
+      border-top-right-radius: 6px;
+    }
+
+    [data-layout="mobile"] .mobile-toolbar-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg-toolbar);
+      border-top-left-radius: 6px;
+      border-top-right-radius: 6px;
+    }
+
+    [data-layout="mobile"] .toolbars-container.mobile-collapsed .mobile-toolbar-header {
+      border-bottom: none;
+    }
+
+    .mobile-tb-tabs {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    .mobile-tb-tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .mobile-tb-tab {
+      flex-shrink: 0;
+      height: 30px;
+      padding: 0 10px;
+      border: 1px solid var(--border-subtle);
+      border-radius: 999px;
+      background: var(--bg-editor);
+      color: var(--text-secondary);
+      font-size: 12.5px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+    }
+
+    .mobile-tb-tab.active {
+      background: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+
+    .mobile-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    [data-layout="mobile"] .mobile-header-actions .tb-btn {
+      min-width: 32px;
+      height: 32px;
+    }
+
+    [data-layout="mobile"] .toolbar-row {
+      display: none;
+    }
+
+    [data-layout="mobile"] .toolbar-row.mobile-active {
+      display: flex;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding: 7px 8px;
+      gap: 6px;
+      border-bottom: none;
+    }
+
+    [data-layout="mobile"] .toolbar-row.mobile-active::-webkit-scrollbar {
+      display: none;
+    }
+
+    [data-layout="mobile"] .toolbar-row.mobile-active[data-toolbar-id="basic"] .tb-btn,
+    [data-layout="mobile"] .toolbar-row.mobile-active[data-toolbar-id="basic"] .tb-select {
+      flex-shrink: 0;
+      height: 36px;
+    }
+
+    [data-layout="mobile"] .toolbar-row.mobile-active[data-toolbar-id="basic"] .tb-btn {
+      min-width: 36px;
+      padding: 0 8px;
+    }
+
+    [data-layout="mobile"] .toolbar-row.mobile-active[data-toolbar-id="basic"] .tb-select {
+      font-size: 13px;
+      padding: 0 8px;
+    }
+
+    [data-layout="mobile"] .toolbar-row.mobile-active.mobile-symbol-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+      gap: 5px;
+      padding: 8px;
+      max-height: 152px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      align-items: stretch;
+    }
+
+    [data-layout="mobile"] .toolbar-row.mobile-active.mobile-symbol-grid .toolbar-label {
+      display: none;
+    }
+
+    [data-layout="mobile"] .toolbar-row.mobile-active.mobile-symbol-grid .tb-btn.sym-btn {
+      width: 100%;
+      min-width: 0;
+      height: 38px;
+      font-size: 16px;
+      border-radius: 6px;
+    }
+
+    [data-layout="mobile"] .toolbar-row.mobile-active.mobile-symbol-grid .tb-btn.switch-btn {
+      grid-column: 1 / -1;
+      height: 34px;
+      font-size: 12.5px;
+      margin-top: 2px;
+      border-radius: 6px;
+    }
+
+    [data-layout="mobile"] .color-popover.open {
+      position: fixed;
+      top: auto;
+      bottom: 54px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(300px, calc(100vw - 24px));
+      padding: 12px;
+      z-index: 1100;
+    }
+
+    [data-layout="mobile"] .color-swatch {
+      width: 100%;
+      height: 30px;
+    }
+
+    [data-layout="mobile"] .editor-area-wrap {
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    [data-layout="mobile"] .ql-editor {
+      font-size: 16px;
+      padding: 12px 14px;
+      min-height: 200px;
+    }
+
+    [data-layout="mobile"] .mobile-bottom-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 6px 8px;
+      background: var(--bg-toolbar);
+      border-top: 1px solid var(--border-subtle);
+      border-bottom-left-radius: 6px;
+      border-bottom-right-radius: 6px;
+    }
+
+    .mobile-bottom-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    [data-layout="mobile"] .mobile-bottom-bar .tb-btn {
+      min-width: 34px;
+      height: 34px;
+      padding: 0 7px;
+      font-size: 12px;
+    }
+
+    [data-layout="mobile"] .mobile-bottom-bar .mobile-copy-pill {
+      padding: 0 8px;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-editor);
+      font-weight: 500;
+    }
+
+    [data-layout="mobile"] .modal-backdrop {
+      align-items: flex-end;
+      padding: 0;
+    }
+
+    [data-layout="mobile"] .modal-panel {
+      width: 100%;
+      max-width: 100%;
+      max-height: 92vh;
+      border-radius: 14px 14px 0 0;
+      border-bottom: none;
+    }
+
+    [data-layout="mobile"] .modal-tab-btn {
+      padding: 9px 12px;
+      font-size: 13px;
+    }
+
+    [data-layout="mobile"] .sortable-grid {
+      grid-template-columns: 1fr;
+    }
+
+    [data-layout="mobile"] .sortable-grid.symbol-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    [data-layout="mobile"] .mini-btn {
+      width: 30px;
+      height: 30px;
+    }
+
+    [data-layout="mobile"] .theme-options {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    [data-layout="mobile"] .theme-card {
+      padding: 8px 4px;
+      font-size: 12px;
+    }
+
     @media (max-width: 520px) {
       .sortable-grid {
         grid-template-columns: 1fr;
@@ -827,6 +1076,7 @@
     <div class="editor-area-wrap" id="editorAreaWrap">
       <div id="quillEditor"></div>
     </div>
+    <div class="mobile-bottom-bar" id="mobileBottomBar"></div>
   </div>
 
   <!-- Settings Modal -->
@@ -847,6 +1097,15 @@
               <button type="button" class="theme-card" data-theme-val="light">☀️ 白天模式</button>
               <button type="button" class="theme-card" data-theme-val="dark">🌙 黑夜模式</button>
               <button type="button" class="theme-card" data-theme-val="eyecare">🌿 護眼模式</button>
+            </div>
+          </div>
+
+          <div class="setting-section">
+            <h4>版面模式</h4>
+            <div class="theme-options" id="layoutOptions">
+              <button type="button" class="theme-card" data-layout-val="auto">🔄 自動偵測</button>
+              <button type="button" class="theme-card" data-layout-val="desktop">💻 桌面版面</button>
+              <button type="button" class="theme-card" data-layout-val="mobile">📱 手機版面</button>
             </div>
           </div>
 
@@ -967,6 +1226,7 @@
 
       const DEFAULT_CONFIG = {
         theme: 'light',
+        layoutMode: 'auto',
         toolbars: [
           { id: 'basic', enabled: true },
           { id: 'zhPunct', enabled: false },
@@ -1035,6 +1295,9 @@
         if (['light', 'dark', 'eyecare'].includes(saved.theme)) {
           def.theme = saved.theme;
         }
+        if (['auto', 'desktop', 'mobile'].includes(saved.layoutMode)) {
+          def.layoutMode = saved.layoutMode;
+        }
 
         def.toolbars = mergeItemList(saved.toolbars, DEFAULT_CONFIG.toolbars);
         TOOLBAR_ITEM_SCHEMAS.forEach(({ configKey }) => {
@@ -1064,10 +1327,13 @@
 
       let config = loadConfig();
 
-      // Apply URL query overrides if provided (?theme=dark)
+      // Apply URL query overrides if provided (?theme=dark&layout=mobile)
       const urlParams = new URLSearchParams(window.location.search);
       if (['light', 'dark', 'eyecare'].includes(urlParams.get('theme'))) {
         config.theme = urlParams.get('theme');
+      }
+      if (['auto', 'desktop', 'mobile'].includes(urlParams.get('layout'))) {
+        config.layoutMode = urlParams.get('layout');
       }
 
       function applyTheme(theme) {
@@ -1076,12 +1342,36 @@
         } else {
           document.documentElement.setAttribute('data-theme', theme);
         }
-        document.querySelectorAll('.theme-card').forEach((card) => {
+        document.querySelectorAll('#themeOptions .theme-card').forEach((card) => {
           card.classList.toggle('active', card.dataset.themeVal === theme);
         });
       }
 
+      let currentResolvedMobile = null;
+      let mobileActiveToolbarId = 'basic';
+      let mobileToolbarCollapsed = false;
+
+      function resolveIsMobile() {
+        if (config.layoutMode === 'mobile') return true;
+        if (config.layoutMode === 'desktop') return false;
+        return window.innerWidth <= 640;
+      }
+
+      function applyLayout(forceRerender) {
+        const isMobile = resolveIsMobile();
+        document.documentElement.setAttribute('data-layout', isMobile ? 'mobile' : 'desktop');
+        document.querySelectorAll('#layoutOptions .theme-card').forEach((card) => {
+          card.classList.toggle('active', card.dataset.layoutVal === config.layoutMode);
+        });
+        const changed = currentResolvedMobile !== isMobile;
+        currentResolvedMobile = isMobile;
+        if (changed && forceRerender && typeof renderToolbars === 'function') {
+          renderToolbars();
+        }
+      }
+
       applyTheme(config.theme);
+      applyLayout(false);
 
       // =========================================================================
       // 3. Quill 2 Initialization with Style Attributors
@@ -1872,12 +2162,15 @@
       // 9. Render Toolbars Dynamically Based on User Config
       // =========================================================================
       const toolbarsContainer = document.getElementById('toolbarsContainer');
+      const mobileBottomBar = document.getElementById('mobileBottomBar');
 
       function switchPunctuationBar(fromId, toId) {
         config.toolbars.forEach((tb) => {
           if (tb.id === fromId) tb.enabled = false;
           if (tb.id === toId) tb.enabled = true;
         });
+        mobileActiveToolbarId = toId;
+        mobileToolbarCollapsed = false;
         saveConfig();
         renderToolbars();
         renderSettingsLists();
@@ -1885,7 +2178,7 @@
 
       function renderSymbolRow(id, label, items, switchTarget) {
         const row = document.createElement('div');
-        row.className = 'toolbar-row';
+        row.className = 'toolbar-row mobile-symbol-grid';
         row.dataset.toolbarId = id;
 
         const lbl = document.createElement('span');
@@ -1918,17 +2211,111 @@
         return row;
       }
 
+      function renderMobileBottomBar() {
+        mobileBottomBar.innerHTML = '';
+        if (!currentResolvedMobile) return;
+
+        const leftGroup = document.createElement('div');
+        leftGroup.className = 'mobile-bottom-group';
+
+        ['undo', 'redo', 'outdent', 'indent'].forEach((id) => {
+          const btn = createBasicItemElement(id);
+          leftGroup.appendChild(btn);
+        });
+
+        const rightGroup = document.createElement('div');
+        rightGroup.className = 'mobile-bottom-group';
+
+        [
+          { label: '純文字', handler: copyPlainText, title: '複製純文字' },
+          { label: '富文字', handler: copyRichHtml, title: '複製富文字' },
+          { label: 'MD', handler: copyMarkdown, title: '複製 Markdown' }
+        ].forEach(({ label, handler, title }) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'tb-btn mobile-copy-pill';
+          btn.textContent = label;
+          btn.title = title;
+          btn.addEventListener('click', handler);
+          rightGroup.appendChild(btn);
+        });
+
+        mobileBottomBar.appendChild(leftGroup);
+        mobileBottomBar.appendChild(rightGroup);
+      }
+
       function renderToolbars() {
         toolbarsContainer.innerHTML = '';
         Object.keys(basicControlRefs).forEach((k) => delete basicControlRefs[k]);
 
-        let settingsBtnPlaced = false;
+        const enabledToolbars = config.toolbars.filter((tb) => tb.enabled);
+        if (enabledToolbars.length > 0 && !enabledToolbars.some((tb) => tb.id === mobileActiveToolbarId)) {
+          mobileActiveToolbarId = enabledToolbars[0].id;
+        }
 
-        config.toolbars.forEach((tb) => {
-          if (!tb.enabled) return;
+        toolbarsContainer.classList.toggle('mobile-collapsed', Boolean(currentResolvedMobile && mobileToolbarCollapsed));
+
+        if (currentResolvedMobile) {
+          const mobileHeader = document.createElement('div');
+          mobileHeader.className = 'mobile-toolbar-header';
+
+          const tabsWrap = document.createElement('div');
+          tabsWrap.className = 'mobile-tb-tabs';
+
+          enabledToolbars.forEach((tb) => {
+            const tabBtn = document.createElement('button');
+            tabBtn.type = 'button';
+            const isActive = !mobileToolbarCollapsed && tb.id === mobileActiveToolbarId;
+            tabBtn.className = 'mobile-tb-tab' + (isActive ? ' active' : '');
+            tabBtn.textContent = TOOLBAR_META[tb.id]?.label || tb.id;
+            tabBtn.addEventListener('click', () => {
+              if (mobileActiveToolbarId === tb.id) {
+                mobileToolbarCollapsed = !mobileToolbarCollapsed;
+              } else {
+                mobileActiveToolbarId = tb.id;
+                mobileToolbarCollapsed = false;
+              }
+              renderToolbars();
+            });
+            tabsWrap.appendChild(tabBtn);
+          });
+
+          if (enabledToolbars.length === 0) {
+            const emptyHint = document.createElement('span');
+            emptyHint.className = 'toolbar-label';
+            emptyHint.textContent = '已隱藏所有工具列';
+            tabsWrap.appendChild(emptyHint);
+          }
+
+          const actionsWrap = document.createElement('div');
+          actionsWrap.className = 'mobile-header-actions';
+
+          if (enabledToolbars.length > 0) {
+            const toggleBtn = document.createElement('button');
+            toggleBtn.type = 'button';
+            toggleBtn.className = 'tb-btn';
+            toggleBtn.title = mobileToolbarCollapsed ? '展開工具列' : '收合工具列';
+            toggleBtn.textContent = mobileToolbarCollapsed ? '▾' : '▴';
+            toggleBtn.addEventListener('click', () => {
+              mobileToolbarCollapsed = !mobileToolbarCollapsed;
+              renderToolbars();
+            });
+            actionsWrap.appendChild(toggleBtn);
+          }
+
+          actionsWrap.appendChild(createSettingsButton());
+          mobileHeader.appendChild(tabsWrap);
+          mobileHeader.appendChild(actionsWrap);
+          toolbarsContainer.appendChild(mobileHeader);
+        }
+
+        let settingsBtnPlaced = currentResolvedMobile;
+
+        enabledToolbars.forEach((tb) => {
+          let row = null;
 
           if (tb.id === 'basic') {
-            const row = document.createElement('div');
+            row = document.createElement('div');
             row.className = 'toolbar-row';
             row.dataset.toolbarId = 'basic';
 
@@ -1944,28 +2331,31 @@
               row.appendChild(createSettingsButton());
               settingsBtnPlaced = true;
             }
-
-            toolbarsContainer.appendChild(row);
           } else if (tb.id === 'zhPunct') {
-            const row = renderSymbolRow('zhPunct', '中文標點', config.zhPunctItems, {
+            row = renderSymbolRow('zhPunct', '中文標點', config.zhPunctItems, {
               to: 'enPunct',
               btnText: '切換英文標點'
             });
-            toolbarsContainer.appendChild(row);
           } else if (tb.id === 'enPunct') {
-            const row = renderSymbolRow('enPunct', '英文標點', config.enPunctItems, {
+            row = renderSymbolRow('enPunct', '英文標點', config.enPunctItems, {
               to: 'zhPunct',
               btnText: '切換中文標點'
             });
-            toolbarsContainer.appendChild(row);
           } else if (tb.id === 'otherSymbols') {
-            toolbarsContainer.appendChild(renderSymbolRow('otherSymbols', '其他符號', config.otherSymbolsItems));
+            row = renderSymbolRow('otherSymbols', '其他符號', config.otherSymbolsItems);
           } else if (tb.id === 'bopomofo') {
-            toolbarsContainer.appendChild(renderSymbolRow('bopomofo', '注音符號', config.bopomofoItems));
+            row = renderSymbolRow('bopomofo', '注音符號', config.bopomofoItems);
+          }
+
+          if (row) {
+            if (currentResolvedMobile && !mobileToolbarCollapsed && tb.id === mobileActiveToolbarId) {
+              row.classList.add('mobile-active');
+            }
+            toolbarsContainer.appendChild(row);
           }
         });
 
-        // If user hid all toolbars or basic toolbar, ensure settings button is still reachable
+        // If user hid all toolbars or basic toolbar on desktop, ensure settings button is still reachable
         if (!settingsBtnPlaced) {
           const fallbackRow = document.createElement('div');
           fallbackRow.className = 'toolbar-row';
@@ -1976,6 +2366,7 @@
           toolbarsContainer.appendChild(fallbackRow);
         }
 
+        renderMobileBottomBar();
         updateToolbarActiveStates();
         notifyHeight();
       }
@@ -2155,9 +2546,24 @@
         saveConfig();
       });
 
+      document.getElementById('layoutOptions').addEventListener('click', (e) => {
+        const card = e.target.closest('.theme-card');
+        if (!card) return;
+        config.layoutMode = card.dataset.layoutVal;
+        saveConfig();
+        applyLayout(true);
+      });
+
+      window.addEventListener('resize', () => {
+        if (config.layoutMode === 'auto') {
+          applyLayout(true);
+        }
+      });
+
       document.getElementById('resetSettingsBtn').addEventListener('click', () => {
         config = cloneDefaultConfig();
         applyTheme(config.theme);
+        applyLayout(false);
         saveConfig();
         renderToolbars();
         renderSettingsLists();
@@ -2384,6 +2790,11 @@
             }
             if (typeof data.placeholder === 'string') {
               quill.root.setAttribute('data-placeholder', data.placeholder);
+            }
+            if (['auto', 'desktop', 'mobile'].includes(data.layoutMode)) {
+              config.layoutMode = data.layoutMode;
+              saveConfig();
+              applyLayout(true);
             }
             break;
           }

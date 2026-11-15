@@ -41,6 +41,10 @@
 - **問題**：在 PowerShell 中以 `node -e "..."` 執行含跳脫雙引號的腳本時出現 `ParserError`；Python 輸出含 `⦁` 等字元時出現 `UnicodeEncodeError (cp950)`。
 - **修正**：node 改用單引號包住腳本；Python 改用 `sys.stdout.buffer.write(...encode('utf-8'))` 輸出。
 
+### 7. 版面模式卡片與外觀主題卡片 `.theme-card` 選取器衝突
+- **問題**：新增「版面模式」卡片（`#layoutOptions`）並沿用 `.theme-card` 樣式時，`applyTheme()` 原先以 `document.querySelectorAll('.theme-card')` 更新 `active` 狀態，會誤將 `#layoutOptions` 內卡片的 `active` 樣式清除。
+- **修正**：將 `applyTheme()` 的選取器限縮為 `#themeOptions .theme-card`，並由 `applyLayout()` 獨立維護 `#layoutOptions .theme-card` 的 `active` 狀態。
+
 ---
 
 *本次開發過程無其他語法報錯或執行期錯誤。*
