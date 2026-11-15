@@ -384,6 +384,11 @@
       position: relative;
     }
 
+    /* Suppress default Quill list counter to avoid ghosting */
+    .ql-editor li > .ql-ui {
+      display: none !important;
+    }
+
     .ql-editor li[data-list="bullet"] {
       padding-left: 1.6em;
     }
@@ -1194,18 +1199,162 @@
         return lines.join('\n');
       }
 
-      function getRichHtmlContent() {
-        // Produce clean HTML with inline indent & list markers for external pasting
-        const clone = quill.root.cloneNode(true);
-        clone.querySelectorAll('.ql-ui').forEach((el) => el.remove());
-        clone.querySelectorAll('[class*="ql-indent-"]').forEach((el) => {
-          const m = el.className.match(/ql-indent-(\d+)/);
-          if (m && el.tagName !== 'LI') {
-            const lvl = parseInt(m[1], 10);
-            el.style.marginLeft = `${lvl * 2}ch`;
+      // ---- Rich HTML export (Word / Google Docs / Outlook friendly) ----
+      // Word does not render CSS pseudo-elements (::before) nor class-based styles,
+      // so we serialize Quill's DOM into self-contained semantic HTML:
+      //   - real nested <ul>/<ol> lists (Word converts them to native lists)
+      //   - <b>/<i>/<u>/<s> tags for emphasis
+      //   - inline styles with hex colors and pt font sizes
+      function escapeHtml(str) {
+        return str
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      function cssColorToHex(value) {
+        if (!value) return '';
+        const m = value.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+        if (!m) return value;
+        return '#' + [m[1], m[2], m[3]].map((n) => parseInt(n, 10).toString(16).padStart(2, '0')).join('');
+      }
+
+      function cssSizeToPt(value) {
+        if (!value) return '';
+        const m = value.match(/^([\d.]+)px$/i);
+        if (!m) return value;
+        return `${Math.round(parseFloat(m[1]) * 0.75 * 10) / 10}pt`;
+      }
+
+      function serializeInlineForExport(node) {
+        if (node.nodeType === Node.TEXT_NODE) {
+          // Preserve consecutive spaces (Quill uses white-space: pre-wrap)
+          return escapeHtml(node.textContent.replace(/\u00a0/g, ' ')).replace(/ {2}/g, ' &nbsp;');
+        }
+        if (node.nodeType !== Node.ELEMENT_NODE) return '';
+        if (node.classList.contains('ql-ui')) return '';
+
+        const tag = node.tagName.toLowerCase();
+        if (tag === 'br') return '<br>';
+
+        let inner = Array.from(node.childNodes).map(serializeInlineForExport).join('');
+        if (!inner) return '';
+
+        // Inline styles (color / background / font / size)
+        const styles = [];
+        const st = node.style;
+        if (st.color) styles.push(`color:${cssColorToHex(st.color)}`);
+        if (st.backgroundColor) styles.push(`background:${cssColorToHex(st.backgroundColor)}`);
+        if (st.fontFamily) styles.push(`font-family:${st.fontFamily.replace(/"/g, "'")}`);
+        if (st.fontSize) styles.push(`font-size:${cssSizeToPt(st.fontSize)}`);
+        if (styles.length) inner = `<span style="${styles.join(';')}">${inner}</span>`;
+        if (st.color) inner = `<font color="${cssColorToHex(st.color)}">${inner}</font>`;
+
+        switch (tag) {
+          case 'strong':
+          case 'b':
+            return `<b>${inner}</b>`;
+          case 'em':
+          case 'i':
+            return `<i>${inner}</i>`;
+          case 'u':
+            return `<u>${inner}</u>`;
+          case 's':
+          case 'del':
+          case 'strike':
+            return `<s>${inner}</s>`;
+          case 'sub':
+          case 'sup':
+          case 'code':
+            return `<${tag}>${inner}</${tag}>`;
+          case 'a':
+            return `<a href="${escapeHtml(node.getAttribute('href') || '')}">${inner}</a>`;
+          default:
+            return inner;
+        }
+      }
+
+      function getBlockInnerHtml(block) {
+        const html = Array.from(block.childNodes).map(serializeInlineForExport).join('');
+        // Quill represents an empty line as <p><br></p>
+        return html === '' || html === '<br>' ? '&nbsp;' : html;
+      }
+
+      function getIndentLevel(el) {
+        const m = (el.className || '').match(/ql-indent-(\d+)/);
+        return m ? parseInt(m[1], 10) : 0;
+      }
+
+      function getAlignStyle(el) {
+        const m = (el.className || '').match(/ql-align-(center|right|justify)/);
+        return m ? `text-align:${m[1]};` : '';
+      }
+
+      function serializeListItems(lis) {
+        // Rebuild Quill 2's flat <ol><li data-list class="ql-indent-N"> into nested lists
+        let html = '';
+        const stack = []; // stack[level] = 'ul' | 'ol'
+        // Word's default multilevel numbering: 1. → a. → i. → 1. ...
+        const OL_TYPES = [
+          { attr: '1', css: 'decimal' },
+          { attr: 'a', css: 'lower-alpha' },
+          { attr: 'i', css: 'lower-roman' }
+        ];
+        const listOpen = (type) => {
+          if (type === 'ol') {
+            const t = OL_TYPES[stack.length % OL_TYPES.length];
+            return `<ol type="${t.attr}" style="list-style-type:${t.css};margin-top:0;margin-bottom:0;">`;
           }
+          return '<ul style="margin-top:0;margin-bottom:0;">';
+        };
+
+        lis.forEach((li) => {
+          const type = li.getAttribute('data-list') === 'ordered' ? 'ol' : 'ul';
+          const level = Math.min(getIndentLevel(li), 8);
+
+          // Close lists deeper than the current level
+          while (stack.length - 1 > level) {
+            html += `</li></${stack.pop()}>`;
+          }
+          // Same level but different list type -> close it and start a new one
+          if (stack.length - 1 === level && stack[level] !== type) {
+            html += `</li></${stack.pop()}>`;
+          }
+          if (stack.length - 1 === level) {
+            html += '</li>';
+          }
+          // Open lists until the current level is reached (nested inside the open <li>)
+          while (stack.length - 1 < level) {
+            const isTarget = stack.length === level;
+            const openType = isTarget ? type : (stack[stack.length - 1] || type);
+            html += listOpen(openType);
+            stack.push(openType);
+            if (!isTarget) html += '<li style="list-style-type:none;">';
+          }
+          html += `<li style="${getAlignStyle(li)}">${getBlockInnerHtml(li)}`;
         });
-        return clone.innerHTML;
+
+        while (stack.length) {
+          html += `</li></${stack.pop()}>`;
+        }
+        return html;
+      }
+
+      function getRichHtmlContent() {
+        const parts = [];
+        Array.from(quill.root.children).forEach((block) => {
+          const tag = block.tagName;
+          if (tag === 'OL' || tag === 'UL') {
+            parts.push(serializeListItems(Array.from(block.children).filter((el) => el.tagName === 'LI')));
+            return;
+          }
+          const level = getIndentLevel(block);
+          const style = `margin:0;${level ? `margin-left:${level * 2}em;` : ''}${getAlignStyle(block)}`;
+          const outTag = /^H[1-6]$/.test(tag) ? tag.toLowerCase() : tag === 'BLOCKQUOTE' ? 'blockquote' : tag === 'PRE' ? 'pre' : 'p';
+          parts.push(`<${outTag} style="${style}">${getBlockInnerHtml(block)}</${outTag}>`);
+        });
+        return parts.join('');
       }
 
       async function copyTextToClipboard(text, successMsg) {
@@ -1228,6 +1377,34 @@
       async function copyRichToClipboard() {
         const html = getRichHtmlContent();
         const plain = getPlainTextContent();
+
+        // Primary: synchronous copy event + clipboardData.setData().
+        // Chromium's async Clipboard API (ClipboardItem) sanitizes text/html and
+        // drops inline styles, which made Word lose colors / fonts / indents.
+        // setData() inside a copy event writes the HTML as-is.
+        let written = false;
+        const onCopy = (e) => {
+          if (!e.clipboardData) return;
+          e.clipboardData.setData('text/html', html);
+          e.clipboardData.setData('text/plain', plain);
+          e.preventDefault();
+          e.stopImmediatePropagation(); // keep Quill's own copy handler out of it
+          written = true;
+        };
+        document.addEventListener('copy', onCopy, true);
+        try {
+          document.execCommand('copy');
+        } catch (e) {
+          // ignore, fall back below
+        } finally {
+          document.removeEventListener('copy', onCopy, true);
+        }
+        if (written) {
+          showToast('已複製富文字到剪貼簿');
+          return;
+        }
+
+        // Fallback: async Clipboard API
         try {
           if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
             const item = new ClipboardItem({
@@ -1239,23 +1416,9 @@
             return;
           }
         } catch (e) {
-          // Fallback below
+          // ignore
         }
-        const div = document.createElement('div');
-        div.contentEditable = 'true';
-        div.style.position = 'fixed';
-        div.style.left = '-9999px';
-        div.innerHTML = html;
-        document.body.appendChild(div);
-        const sel = window.getSelection();
-        const range = document.createRange();
-        range.selectNodeContents(div);
-        sel.removeAllRanges();
-        sel.addRange(range);
-        document.execCommand('copy');
-        sel.removeAllRanges();
-        document.body.removeChild(div);
-        showToast('已複製富文字到剪貼簿');
+        showToast('複製失敗，請改用 Ctrl+C');
       }
 
       // =========================================================================

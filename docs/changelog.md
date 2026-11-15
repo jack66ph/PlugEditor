@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - 2026-11-15
 
+### Fixed
+- **清單重影**：Quill 2 內建 `.ql-ui` 清單標號與自訂 `li::before` 標號同時顯示，現已隱藏內建標號。
+- **複製富文字貼到 Word 格式遺失**：
+  - 清單：改為輸出巢狀 `<ul>`/`<ol>`，Word 可辨識為原生清單；數字清單依層級採 `1.` → `a.` → `i.`。
+  - 粗體/斜體/底線/刪除線：改輸出 `<b>`/`<i>`/`<u>`/`<s>`。
+  - 顏色/字級：顏色轉 hex（並加 `<font color>` 備援），字級 px 轉 pt。
+  - 剪貼簿寫入改用 `copy` 事件 + `clipboardData.setData()`，避免 Chromium `ClipboardItem` 清洗樣式；保留 `ClipboardItem` 作為備援。
+
+### Changed
+- `getRichHtmlContent()` 改為輸出語意化、自帶行內樣式的 HTML（亦用於 `editor:change` / `editor:getContent`）。
+
+### Notes
+- Word「合併格式設定」貼上會移除顏色與字型，需使用「保留原始格式設定」。
+
+## 2026-11-15（初版）
+
 ### Added
 - **初始建立獨立單檔編輯器 (`editor.html`)**：
   - 整合 Quill 2 (BSD-3-Clause) 富文字編輯核心，採 CDN 引用以利單檔發布與共用。
