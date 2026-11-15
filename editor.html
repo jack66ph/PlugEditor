@@ -1,0 +1,1970 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PlugEditor — 獨立單檔富文字編輯器</title>
+  <!--
+    Third-Party Notice:
+    This editor uses Quill 2 (https://github.com/slab/quill), licensed under the BSD-3-Clause License:
+    Copyright (c) 2017-2024, Slab
+    Copyright (c) 2014, Jason Chen
+    Copyright (c) 2013, salesforce.com
+    All rights reserved.
+    Redistribution and use in source and binary forms, with or without modification, are permitted
+    provided that the above copyright notice, this list of conditions and the following disclaimer
+    are retained, and that the names of the copyright holders or contributors are not used to
+    endorse or promote products derived from this software without specific prior written permission.
+  -->
+  <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-app: #ffffff;
+      --bg-toolbar: #f8fafc;
+      --bg-toolbar-hover: #e2e8f0;
+      --bg-toolbar-active: #dbeafe;
+      --bg-editor: #ffffff;
+      --bg-modal: #ffffff;
+      --bg-input: #ffffff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --text-active: #1d4ed8;
+      --border-color: #cbd5e1;
+      --border-subtle: #e2e8f0;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --danger: #dc2626;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+      --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.14);
+      --toast-bg: #1e293b;
+      --toast-text: #f8fafc;
+      --scrollbar-thumb: #cbd5e1;
+    }
+
+    [data-theme="dark"] {
+      --bg-app: #0f172a;
+      --bg-toolbar: #1e293b;
+      --bg-toolbar-hover: #334155;
+      --bg-toolbar-active: #1e3a8a;
+      --bg-editor: #0f172a;
+      --bg-modal: #1e293b;
+      --bg-input: #0f172a;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-active: #93c5fd;
+      --border-color: #334155;
+      --border-subtle: #283548;
+      --accent: #3b82f6;
+      --accent-hover: #60a5fa;
+      --danger: #f87171;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+      --toast-bg: #f1f5f9;
+      --toast-text: #0f172a;
+      --scrollbar-thumb: #475569;
+    }
+
+    [data-theme="eyecare"] {
+      --bg-app: #f3f7ec;
+      --bg-toolbar: #e6eedb;
+      --bg-toolbar-hover: #d5e2c4;
+      --bg-toolbar-active: #c2d9a8;
+      --bg-editor: #f7faf0;
+      --bg-modal: #f3f7ec;
+      --bg-input: #fafcf6;
+      --text-primary: #273620;
+      --text-secondary: #586c4e;
+      --text-active: #2e5e1e;
+      --border-color: #bfd0ab;
+      --border-subtle: #d6e2c6;
+      --accent: #3f7a2c;
+      --accent-hover: #2f6120;
+      --danger: #b91c1c;
+      --shadow-sm: 0 1px 2px rgba(39, 54, 32, 0.08);
+      --shadow-md: 0 8px 24px rgba(39, 54, 32, 0.16);
+      --toast-bg: #273620;
+      --toast-text: #f3f7ec;
+      --scrollbar-thumb: #b4c79d;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg-app);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .editor-shell {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: var(--bg-app);
+      overflow: visible;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Toolbars Container */
+    .toolbars-container {
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-toolbar);
+      border-bottom: 1px solid var(--border-color);
+      border-top-left-radius: 8px;
+      border-top-right-radius: 8px;
+    }
+
+    .toolbar-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .toolbar-row:last-child {
+      border-bottom: none;
+    }
+
+    .toolbar-row.hidden {
+      display: none;
+    }
+
+    .toolbar-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      padding: 0 4px;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    .toolbar-spacer {
+      flex: 1 1 auto;
+    }
+
+    .toolbar-sep {
+      width: 1px;
+      height: 20px;
+      background: var(--border-color);
+      margin: 0 3px;
+    }
+
+    /* Buttons & Selects */
+    .tb-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      min-width: 28px;
+      height: 28px;
+      padding: 0 6px;
+      border: 1px solid transparent;
+      border-radius: 5px;
+      background: transparent;
+      color: var(--text-primary);
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+    }
+
+    .tb-btn:hover {
+      background: var(--bg-toolbar-hover);
+    }
+
+    .tb-btn.active {
+      background: var(--bg-toolbar-active);
+      color: var(--text-active);
+      border-color: rgba(37, 99, 235, 0.25);
+    }
+
+    .tb-btn.locked {
+      background: var(--accent);
+      color: #ffffff;
+    }
+
+    .tb-btn svg {
+      width: 15px;
+      height: 15px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+
+    .tb-btn.sym-btn {
+      min-width: 26px;
+      height: 26px;
+      padding: 0 5px;
+      font-size: 14px;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-editor);
+    }
+
+    .tb-btn.sym-btn:hover {
+      background: var(--bg-toolbar-hover);
+      border-color: var(--border-color);
+    }
+
+    .tb-btn.switch-btn {
+      font-size: 12px;
+      padding: 0 8px;
+      height: 26px;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      background: transparent;
+      font-weight: 500;
+    }
+
+    .tb-btn.switch-btn:hover {
+      background: var(--bg-toolbar-active);
+    }
+
+    .tb-select {
+      height: 28px;
+      padding: 0 6px;
+      border: 1px solid var(--border-color);
+      border-radius: 5px;
+      background: var(--bg-input);
+      color: var(--text-primary);
+      font-size: 12.5px;
+      font-family: inherit;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .tb-select:focus {
+      border-color: var(--accent);
+    }
+
+    /* Color Picker Popover */
+    .color-wrapper {
+      position: relative;
+      display: inline-flex;
+    }
+
+    .color-indicator {
+      width: 14px;
+      height: 3px;
+      border-radius: 1px;
+      background: #ef4444;
+      margin-top: 1px;
+    }
+
+    .color-btn-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      line-height: 1;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .color-popover {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      z-index: 100;
+      margin-top: 4px;
+      padding: 8px;
+      background: var(--bg-modal);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      box-shadow: var(--shadow-md);
+      display: none;
+      width: 196px;
+    }
+
+    .color-popover.open {
+      display: block;
+    }
+
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+
+    .color-swatch {
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      border: 1px solid rgba(128, 128, 128, 0.35);
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .color-swatch:hover {
+      transform: scale(1.12);
+    }
+
+    .color-custom-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      border-top: 1px solid var(--border-subtle);
+      padding-top: 6px;
+    }
+
+    .color-custom-row input[type="color"] {
+      width: 28px;
+      height: 22px;
+      padding: 0;
+      border: none;
+      background: none;
+      cursor: pointer;
+    }
+
+    /* Quill Editor Area Overrides */
+    .editor-area-wrap {
+      position: relative;
+      background: var(--bg-editor);
+      border-bottom-left-radius: 8px;
+      border-bottom-right-radius: 8px;
+    }
+
+    .editor-area-wrap.format-painter-active .ql-editor {
+      cursor: copy !important;
+    }
+
+    .ql-container.ql-snow {
+      border: none !important;
+      font-family: inherit;
+      font-size: 15px;
+      color: var(--text-primary);
+    }
+
+    .ql-editor {
+      min-height: 240px;
+      padding: 14px 18px;
+      color: var(--text-primary);
+      line-height: 1.65;
+    }
+
+    .ql-editor.ql-blank::before {
+      color: var(--text-secondary);
+      font-style: normal;
+      opacity: 0.7;
+    }
+
+    /* 2 half-width spaces per indent level (2ch) */
+    .ql-editor .ql-indent-1:not(li) { padding-left: 2ch !important; }
+    .ql-editor .ql-indent-2:not(li) { padding-left: 4ch !important; }
+    .ql-editor .ql-indent-3:not(li) { padding-left: 6ch !important; }
+    .ql-editor .ql-indent-4:not(li) { padding-left: 8ch !important; }
+    .ql-editor .ql-indent-5:not(li) { padding-left: 10ch !important; }
+    .ql-editor .ql-indent-6:not(li) { padding-left: 12ch !important; }
+    .ql-editor .ql-indent-7:not(li) { padding-left: 14ch !important; }
+    .ql-editor .ql-indent-8:not(li) { padding-left: 16ch !important; }
+
+    /* Custom 6-level Bullet List: ⦁ ◦ ▪ ▫ ▴ ▵ */
+    .ql-editor ol {
+      padding-left: 0;
+      counter-reset: list-0 list-1 list-2 list-3 list-4 list-5;
+    }
+
+    .ql-editor li {
+      list-style-type: none;
+      position: relative;
+    }
+
+    .ql-editor li[data-list="bullet"] {
+      padding-left: 1.6em;
+    }
+
+    .ql-editor li[data-list="bullet"]::before {
+      content: '⦁';
+      display: inline-block;
+      width: 1.4em;
+      margin-left: -1.6em;
+      text-align: center;
+      font-family: "Segoe UI Symbol", "Apple Symbols", "Noto Sans Symbols", sans-serif;
+    }
+
+    .ql-editor li[data-list="bullet"].ql-indent-1 { padding-left: calc(2ch + 1.6em) !important; }
+    .ql-editor li[data-list="bullet"].ql-indent-1::before { content: '◦'; }
+
+    .ql-editor li[data-list="bullet"].ql-indent-2 { padding-left: calc(4ch + 1.6em) !important; }
+    .ql-editor li[data-list="bullet"].ql-indent-2::before { content: '▪'; }
+
+    .ql-editor li[data-list="bullet"].ql-indent-3 { padding-left: calc(6ch + 1.6em) !important; }
+    .ql-editor li[data-list="bullet"].ql-indent-3::before { content: '▫'; }
+
+    .ql-editor li[data-list="bullet"].ql-indent-4 { padding-left: calc(8ch + 1.6em) !important; }
+    .ql-editor li[data-list="bullet"].ql-indent-4::before { content: '▴'; }
+
+    .ql-editor li[data-list="bullet"].ql-indent-5 { padding-left: calc(10ch + 1.6em) !important; }
+    .ql-editor li[data-list="bullet"].ql-indent-5::before { content: '▵'; }
+
+    .ql-editor li[data-list="bullet"].ql-indent-6 { padding-left: calc(12ch + 1.6em) !important; }
+    .ql-editor li[data-list="bullet"].ql-indent-6::before { content: '▵'; }
+
+    /* Custom 6-level Hierarchical Ordered List: 1. / 1.1. / 1.1.1. ... */
+    .ql-editor li[data-list="ordered"] {
+      padding-left: 2.2em;
+      counter-increment: list-0;
+      counter-reset: list-1 list-2 list-3 list-4 list-5;
+    }
+
+    .ql-editor li[data-list="ordered"]::before {
+      content: counter(list-0) '. ';
+      display: inline-block;
+      min-width: 1.8em;
+      margin-left: -2.2em;
+      margin-right: 0.4em;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .ql-editor li[data-list="ordered"].ql-indent-1 {
+      padding-left: calc(2ch + 2.8em) !important;
+      counter-increment: list-1;
+      counter-reset: list-2 list-3 list-4 list-5;
+    }
+    .ql-editor li[data-list="ordered"].ql-indent-1::before {
+      content: counter(list-0) '.' counter(list-1) '. ';
+      min-width: 2.4em;
+      margin-left: -2.8em;
+    }
+
+    .ql-editor li[data-list="ordered"].ql-indent-2 {
+      padding-left: calc(4ch + 3.6em) !important;
+      counter-increment: list-2;
+      counter-reset: list-3 list-4 list-5;
+    }
+    .ql-editor li[data-list="ordered"].ql-indent-2::before {
+      content: counter(list-0) '.' counter(list-1) '.' counter(list-2) '. ';
+      min-width: 3.2em;
+      margin-left: -3.6em;
+    }
+
+    .ql-editor li[data-list="ordered"].ql-indent-3 {
+      padding-left: calc(6ch + 4.4em) !important;
+      counter-increment: list-3;
+      counter-reset: list-4 list-5;
+    }
+    .ql-editor li[data-list="ordered"].ql-indent-3::before {
+      content: counter(list-0) '.' counter(list-1) '.' counter(list-2) '.' counter(list-3) '. ';
+      min-width: 4em;
+      margin-left: -4.4em;
+    }
+
+    .ql-editor li[data-list="ordered"].ql-indent-4 {
+      padding-left: calc(8ch + 5.2em) !important;
+      counter-increment: list-4;
+      counter-reset: list-5;
+    }
+    .ql-editor li[data-list="ordered"].ql-indent-4::before {
+      content: counter(list-0) '.' counter(list-1) '.' counter(list-2) '.' counter(list-3) '.' counter(list-4) '. ';
+      min-width: 4.8em;
+      margin-left: -5.2em;
+    }
+
+    .ql-editor li[data-list="ordered"].ql-indent-5 {
+      padding-left: calc(10ch + 6.0em) !important;
+      counter-increment: list-5;
+    }
+    .ql-editor li[data-list="ordered"].ql-indent-5::before {
+      content: counter(list-0) '.' counter(list-1) '.' counter(list-2) '.' counter(list-3) '.' counter(list-4) '.' counter(list-5) '. ';
+      min-width: 5.6em;
+      margin-left: -6.0em;
+    }
+
+    /* Settings Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.48);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      padding: 16px;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-panel {
+      background: var(--bg-modal);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      box-shadow: var(--shadow-md);
+      width: 100%;
+      max-width: 560px;
+      max-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .modal-body {
+      padding: 14px 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      border-top: 1px solid var(--border-subtle);
+      background: var(--bg-toolbar);
+    }
+
+    .setting-section h4 {
+      margin: 0 0 8px 0;
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .theme-options {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .theme-card {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 10px;
+      border: 1.5px solid var(--border-color);
+      border-radius: 6px;
+      cursor: pointer;
+      background: var(--bg-input);
+      color: var(--text-primary);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .theme-card.active {
+      border-color: var(--accent);
+      background: var(--bg-toolbar-active);
+      color: var(--text-active);
+    }
+
+    .sortable-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .sortable-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+    }
+
+    .sortable-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 6px 8px;
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      background: var(--bg-input);
+      font-size: 13px;
+      user-select: none;
+    }
+
+    .sortable-item.dragging {
+      opacity: 0.45;
+      border-style: dashed;
+    }
+
+    .sortable-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .drag-handle {
+      cursor: grab;
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 1;
+      padding: 0 2px;
+    }
+
+    .sort-arrows {
+      display: flex;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
+    .mini-btn {
+      padding: 2px 6px;
+      font-size: 11px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background: var(--bg-toolbar);
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .mini-btn:hover:not(:disabled) {
+      background: var(--bg-toolbar-hover);
+    }
+
+    .mini-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      padding: 6px 14px;
+      border: none;
+      border-radius: 6px;
+      background: var(--accent);
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-danger-outline {
+      padding: 6px 12px;
+      border: 1px solid var(--danger);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--danger);
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .btn-danger-outline:hover {
+      background: rgba(220, 38, 38, 0.08);
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      background: var(--toast-bg);
+      color: var(--toast-text);
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 500;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s ease, transform 0.18s ease;
+      z-index: 1200;
+      box-shadow: var(--shadow-md);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 520px) {
+      .sortable-grid {
+        grid-template-columns: 1fr;
+      }
+      .theme-options {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="editor-shell" id="editorShell">
+    <div class="toolbars-container" id="toolbarsContainer"></div>
+    <div class="editor-area-wrap" id="editorAreaWrap">
+      <div id="quillEditor"></div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-backdrop" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <span id="settingsTitle">編輯器設定與工具列自訂</span>
+        <button type="button" class="tb-btn" id="closeSettingsBtn" title="關閉">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="setting-section">
+          <h4>外觀模式</h4>
+          <div class="theme-options" id="themeOptions">
+            <button type="button" class="theme-card" data-theme-val="light">☀️ 白天模式</button>
+            <button type="button" class="theme-card" data-theme-val="dark">🌙 黑夜模式</button>
+            <button type="button" class="theme-card" data-theme-val="eyecare">🌿 護眼模式</button>
+          </div>
+        </div>
+
+        <div class="setting-section">
+          <h4>工具列顯示與排列順序（可拖曳或使用上下鍵）</h4>
+          <div class="sortable-list" id="toolbarOrderList"></div>
+        </div>
+
+        <div class="setting-section">
+          <h4>基本排版工具列按鈕自訂（勾選顯示與排序）</h4>
+          <div class="sortable-grid" id="basicItemOrderList"></div>
+        </div>
+
+        <div class="setting-section" style="font-size:11.5px; color:var(--text-secondary); border-top:1px solid var(--border-subtle); padding-top:10px;">
+          核心編輯器採用 <a href="https://github.com/slab/quill" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">Quill 2</a>（BSD-3-Clause 授權；Copyright &copy; 2017–2024 Slab, 2014 Jason Chen, 2013 salesforce.com）。
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-danger-outline" id="resetSettingsBtn">一鍵復原預設</button>
+        <button type="button" class="btn-primary" id="doneSettingsBtn">完成</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      const STORAGE_KEY = 'plugeditor_config_v1';
+
+      // =========================================================================
+      // 1. Symbol & Format Definitions
+      // =========================================================================
+      const ZH_PUNCTUATION = [
+        '，', '、', '。', '‧', '；', '：', '？', '！', '…', '—',
+        '（', '）', '【', '】', '《', '》', '「', '」', '『', '』'
+      ];
+      const EN_PUNCTUATION = [',', '.', '?', '!', '-', '"', "'", ';'];
+      const OTHER_SYMBOLS = ['↑', '↓', '←', '→', '↖', '↗', '↙', '↘', '＼', '／', '＋', '－', '×', '÷', '℃'];
+      const BOPOMOFO_SYMBOLS = [
+        'ㄅ', 'ㄆ', 'ㄇ', 'ㄈ', 'ㄉ', 'ㄊ', 'ㄋ', 'ㄌ', 'ㄍ', 'ㄎ', 'ㄏ',
+        'ㄐ', 'ㄑ', 'ㄒ', 'ㄓ', 'ㄔ', 'ㄕ', 'ㄖ', 'ㄗ', 'ㄘ', 'ㄙ',
+        'ㄧ', 'ㄨ', 'ㄩ',
+        'ㄚ', 'ㄛ', 'ㄜ', 'ㄝ', 'ㄞ', 'ㄟ', 'ㄠ', 'ㄡ', 'ㄢ', 'ㄣ', 'ㄤ', 'ㄥ', 'ㄦ',
+        'ˊ', 'ˇ', 'ˋ', '˙'
+      ];
+
+      const BULLET_CHARS = ['⦁', '◦', '▪', '▫', '▴', '▵'];
+
+      const FONT_FAMILIES = [
+        { label: '預設字型', value: '' },
+        { label: '微軟正黑體', value: '"Microsoft JhengHei", sans-serif' },
+        { label: '新細明體', value: '"PMingLiU", serif' },
+        { label: '標楷體', value: '"DFKai-SB", "BiauKai", serif' },
+        { label: '思源黑體', value: '"Noto Sans TC", sans-serif' },
+        { label: 'Arial', value: 'Arial, sans-serif' },
+        { label: 'Times New Roman', value: '"Times New Roman", serif' },
+        { label: 'Courier New', value: '"Courier New", monospace' },
+        { label: 'Georgia', value: 'Georgia, serif' }
+      ];
+
+      const FONT_SIZES = [
+        { label: '預設大小', value: '' },
+        { label: '12px', value: '12px' },
+        { label: '14px', value: '14px' },
+        { label: '16px', value: '16px' },
+        { label: '18px', value: '18px' },
+        { label: '20px', value: '20px' },
+        { label: '24px', value: '24px' },
+        { label: '28px', value: '28px' },
+        { label: '32px', value: '32px' },
+        { label: '36px', value: '36px' }
+      ];
+
+      const COLOR_PALETTE = [
+        '#000000', '#334155', '#64748b', '#94a3b8', '#ef4444', '#f97316', '#f59e0b',
+        '#eab308', '#84cc16', '#22c55e', '#10b981', '#06b6d4', '#3b82f6', '#6366f1',
+        '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#881337', '#7c2d12', '#ffffff'
+      ];
+
+      const TOOLBAR_META = {
+        basic: { label: '基本排版工具列' },
+        zhPunct: { label: '中文標點符號' },
+        enPunct: { label: '英文標點符號' },
+        otherSymbols: { label: '其他符號' },
+        bopomofo: { label: '注音符號' }
+      };
+
+      const BASIC_ITEM_META = {
+        bold: { label: '粗體' },
+        italic: { label: '斜體' },
+        underline: { label: '底線' },
+        font: { label: '字型' },
+        size: { label: '字體大小' },
+        color: { label: '文字顏色' },
+        clean: { label: '清除格式' },
+        bullet: { label: '符號清單' },
+        ordered: { label: '數字清單' },
+        indent: { label: '增加縮排' },
+        outdent: { label: '減少縮排' },
+        painter: { label: '複製格式' },
+        cut: { label: '剪下' },
+        copy: { label: '複製' },
+        paste: { label: '貼上' },
+        undo: { label: '上一步' },
+        redo: { label: '下一步' },
+        copyText: { label: '複製純文字' },
+        copyRich: { label: '複製富文字' },
+        copyMd: { label: '複製 Markdown' }
+      };
+
+      const DEFAULT_CONFIG = {
+        theme: 'light',
+        toolbars: [
+          { id: 'basic', enabled: true },
+          { id: 'zhPunct', enabled: false },
+          { id: 'enPunct', enabled: false },
+          { id: 'otherSymbols', enabled: false },
+          { id: 'bopomofo', enabled: false }
+        ],
+        basicItems: [
+          { id: 'bold', enabled: true },
+          { id: 'italic', enabled: true },
+          { id: 'underline', enabled: true },
+          { id: 'font', enabled: true },
+          { id: 'size', enabled: true },
+          { id: 'color', enabled: true },
+          { id: 'clean', enabled: true },
+          { id: 'bullet', enabled: true },
+          { id: 'ordered', enabled: true },
+          { id: 'indent', enabled: true },
+          { id: 'outdent', enabled: true },
+          { id: 'painter', enabled: true },
+          { id: 'cut', enabled: true },
+          { id: 'copy', enabled: true },
+          { id: 'paste', enabled: true },
+          { id: 'undo', enabled: true },
+          { id: 'redo', enabled: true },
+          { id: 'copyText', enabled: true },
+          { id: 'copyRich', enabled: true },
+          { id: 'copyMd', enabled: true }
+        ]
+      };
+
+      // =========================================================================
+      // 2. Config Persistence (with safe fallback for sandboxed iframes)
+      // =========================================================================
+      function cloneDefaultConfig() {
+        return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+      }
+
+      function mergeConfig(saved) {
+        const def = cloneDefaultConfig();
+        if (!saved || typeof saved !== 'object') return def;
+
+        if (['light', 'dark', 'eyecare'].includes(saved.theme)) {
+          def.theme = saved.theme;
+        }
+
+        if (Array.isArray(saved.toolbars)) {
+          const validIds = new Set(DEFAULT_CONFIG.toolbars.map((t) => t.id));
+          const merged = [];
+          const seen = new Set();
+          saved.toolbars.forEach((item) => {
+            if (item && validIds.has(item.id) && !seen.has(item.id)) {
+              merged.push({ id: item.id, enabled: Boolean(item.enabled) });
+              seen.add(item.id);
+            }
+          });
+          DEFAULT_CONFIG.toolbars.forEach((item) => {
+            if (!seen.has(item.id)) merged.push({ ...item });
+          });
+          def.toolbars = merged;
+        }
+
+        if (Array.isArray(saved.basicItems)) {
+          const validIds = new Set(DEFAULT_CONFIG.basicItems.map((t) => t.id));
+          const merged = [];
+          const seen = new Set();
+          saved.basicItems.forEach((item) => {
+            if (item && validIds.has(item.id) && !seen.has(item.id)) {
+              merged.push({ id: item.id, enabled: Boolean(item.enabled) });
+              seen.add(item.id);
+            }
+          });
+          DEFAULT_CONFIG.basicItems.forEach((item) => {
+            if (!seen.has(item.id)) merged.push({ ...item });
+          });
+          def.basicItems = merged;
+        }
+
+        return def;
+      }
+
+      function loadConfig() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return cloneDefaultConfig();
+          return mergeConfig(JSON.parse(raw));
+        } catch (e) {
+          return cloneDefaultConfig();
+        }
+      }
+
+      function saveConfig() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+        } catch (e) {
+          // Ignore storage errors in restricted iframes
+        }
+      }
+
+      let config = loadConfig();
+
+      // Apply URL query overrides if provided (?theme=dark)
+      const urlParams = new URLSearchParams(window.location.search);
+      if (['light', 'dark', 'eyecare'].includes(urlParams.get('theme'))) {
+        config.theme = urlParams.get('theme');
+      }
+
+      function applyTheme(theme) {
+        if (theme === 'light') {
+          document.documentElement.removeAttribute('data-theme');
+        } else {
+          document.documentElement.setAttribute('data-theme', theme);
+        }
+        document.querySelectorAll('.theme-card').forEach((card) => {
+          card.classList.toggle('active', card.dataset.themeVal === theme);
+        });
+      }
+
+      applyTheme(config.theme);
+
+      // =========================================================================
+      // 3. Quill 2 Initialization with Style Attributors
+      // =========================================================================
+      const FontStyle = Quill.import('attributors/style/font');
+      FontStyle.whitelist = FONT_FAMILIES.map((f) => f.value).filter(Boolean);
+      Quill.register(FontStyle, true);
+
+      const SizeStyle = Quill.import('attributors/style/size');
+      SizeStyle.whitelist = FONT_SIZES.map((s) => s.value).filter(Boolean);
+      Quill.register(SizeStyle, true);
+
+      const quill = new Quill('#quillEditor', {
+        theme: 'snow',
+        placeholder: urlParams.get('placeholder') || '請在此輸入內容...',
+        modules: {
+          toolbar: false,
+          history: {
+            delay: 500,
+            maxStack: 200,
+            userOnly: true
+          }
+        }
+      });
+
+      // =========================================================================
+      // 4. Toast Helper
+      // =========================================================================
+      const toastEl = document.getElementById('toast');
+      let toastTimer = null;
+      function showToast(msg) {
+        toastEl.textContent = msg;
+        toastEl.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          toastEl.classList.remove('show');
+        }, 2000);
+      }
+
+      // =========================================================================
+      // 5. Format Painter (Word-style: 1 click = once, double click = locked)
+      // =========================================================================
+      let painterMode = 'off'; // 'off' | 'once' | 'locked'
+      let painterFormats = null;
+      let lastPainterClickTime = 0;
+      const editorAreaWrap = document.getElementById('editorAreaWrap');
+
+      function captureSelectionFormats() {
+        const range = quill.getSelection();
+        if (!range) return null;
+        const fmt = quill.getFormat(range);
+        const captured = {};
+        ['bold', 'italic', 'underline', 'color', 'background', 'font', 'size'].forEach((k) => {
+          if (fmt[k] !== undefined) captured[k] = fmt[k];
+        });
+        return captured;
+      }
+
+      function applyPainterFormatsToSelection() {
+        if (painterMode === 'off' || !painterFormats) return;
+        const range = quill.getSelection();
+        if (!range) return;
+
+        // Clear inline formats first, then apply captured formats
+        ['bold', 'italic', 'underline', 'color', 'background', 'font', 'size'].forEach((k) => {
+          quill.format(k, painterFormats[k] !== undefined ? painterFormats[k] : false, 'user');
+        });
+
+        if (painterMode === 'once') {
+          deactivatePainter();
+        }
+      }
+
+      function deactivatePainter() {
+        painterMode = 'off';
+        painterFormats = null;
+        editorAreaWrap.classList.remove('format-painter-active');
+        updateToolbarActiveStates();
+      }
+
+      function handlePainterClick() {
+        const now = Date.now();
+        const isDouble = now - lastPainterClickTime < 350;
+        lastPainterClickTime = now;
+
+        if (isDouble) {
+          if (painterMode === 'off') {
+            painterFormats = captureSelectionFormats();
+          }
+          if (painterFormats) {
+            painterMode = 'locked';
+            editorAreaWrap.classList.add('format-painter-active');
+            showToast('複製格式已鎖定（按 Esc 或再點一次取消）');
+          }
+        } else {
+          if (painterMode !== 'off') {
+            deactivatePainter();
+          } else {
+            const captured = captureSelectionFormats();
+            if (!captured) {
+              showToast('請先將游標放在要複製格式的文字上');
+              return;
+            }
+            painterFormats = captured;
+            painterMode = 'once';
+            editorAreaWrap.classList.add('format-painter-active');
+            showToast('請反白或點擊目標文字以套用格式');
+          }
+        }
+        updateToolbarActiveStates();
+      }
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && painterMode !== 'off') {
+          deactivatePainter();
+        }
+      });
+
+      quill.root.addEventListener('mouseup', () => {
+        if (painterMode !== 'off') {
+          setTimeout(applyPainterFormatsToSelection, 0);
+        }
+      });
+
+      // =========================================================================
+      // 6. Export / Copy Converters (Plain Text, Rich Text, Markdown)
+      // =========================================================================
+      function getHierarchicalCounters(liElements) {
+        const counters = [0, 0, 0, 0, 0, 0];
+        const results = new Map();
+
+        liElements.forEach((li) => {
+          const type = li.getAttribute('data-list');
+          const levelMatch = li.className.match(/ql-indent-(\d+)/);
+          const level = levelMatch ? Math.min(5, parseInt(levelMatch[1], 10)) : 0;
+
+          if (type === 'ordered') {
+            counters[level] += 1;
+            for (let i = level + 1; i < counters.length; i++) counters[i] = 0;
+            const label = counters.slice(0, level + 1).join('.') + '.';
+            results.set(li, { type: 'ordered', level, label });
+          } else {
+            for (let i = 0; i < counters.length; i++) counters[i] = 0;
+            const sym = BULLET_CHARS[Math.min(level, BULLET_CHARS.length - 1)];
+            results.set(li, { type: 'bullet', level, label: sym });
+          }
+        });
+        return results;
+      }
+
+      function getPlainTextContent() {
+        const root = quill.root;
+        const lines = [];
+        const allLis = Array.from(root.querySelectorAll('li'));
+        const listMetaMap = getHierarchicalCounters(allLis);
+
+        Array.from(root.children).forEach((block) => {
+          if (block.tagName === 'OL' || block.tagName === 'UL') {
+            Array.from(block.children).forEach((li) => {
+              if (li.tagName !== 'LI') return;
+              const meta = listMetaMap.get(li) || { level: 0, label: '⦁' };
+              const indent = '  '.repeat(meta.level);
+              const text = (li.innerText || li.textContent || '').replace(/\u00a0/g, ' ');
+              lines.push(`${indent}${meta.label} ${text}`);
+            });
+          } else {
+            const levelMatch = block.className.match(/ql-indent-(\d+)/);
+            const level = levelMatch ? parseInt(levelMatch[1], 10) : 0;
+            const indent = '  '.repeat(level);
+            const text = (block.innerText || block.textContent || '').replace(/\u00a0/g, ' ');
+            // Quill uses <p><br></p> for empty lines
+            lines.push(text === '\n' ? '' : `${indent}${text}`);
+          }
+        });
+
+        return lines.join('\n');
+      }
+
+      function serializeInlineMarkdown(node) {
+        if (node.nodeType === Node.TEXT_NODE) {
+          return node.textContent.replace(/\u00a0/g, ' ');
+        }
+        if (node.nodeType !== Node.ELEMENT_NODE) return '';
+
+        const tag = node.tagName.toLowerCase();
+        if (tag === 'br') return '';
+
+        const inner = Array.from(node.childNodes).map(serializeInlineMarkdown).join('');
+        if (!inner) return '';
+
+        if (tag === 'strong' || tag === 'b') return `**${inner}**`;
+        if (tag === 'em' || tag === 'i') return `*${inner}*`;
+        if (tag === 'u') return `<u>${inner}</u>`;
+        if (tag === 's' || tag === 'del') return `~~${inner}~~`;
+        if (tag === 'a') return `[${inner}](${node.getAttribute('href') || ''})`;
+        if (tag === 'code') return `\`${inner}\``;
+        return inner;
+      }
+
+      function getMarkdownContent() {
+        const root = quill.root;
+        const lines = [];
+        const allLis = Array.from(root.querySelectorAll('li'));
+        const listMetaMap = getHierarchicalCounters(allLis);
+
+        Array.from(root.children).forEach((block) => {
+          if (block.tagName === 'OL' || block.tagName === 'UL') {
+            Array.from(block.children).forEach((li) => {
+              if (li.tagName !== 'LI') return;
+              const meta = listMetaMap.get(li) || { type: 'bullet', level: 0, label: '-' };
+              const indent = '  '.repeat(meta.level);
+              const mdText = Array.from(li.childNodes).map(serializeInlineMarkdown).join('');
+              const prefix = meta.type === 'ordered' ? `${meta.level === 0 ? meta.label : '1.'}` : '-';
+              lines.push(`${indent}${prefix} ${mdText}`);
+            });
+          } else {
+            const levelMatch = block.className.match(/ql-indent-(\d+)/);
+            const level = levelMatch ? parseInt(levelMatch[1], 10) : 0;
+            const indent = '  '.repeat(level);
+            const mdText = Array.from(block.childNodes).map(serializeInlineMarkdown).join('');
+            lines.push(mdText ? `${indent}${mdText}` : '');
+          }
+        });
+
+        return lines.join('\n');
+      }
+
+      function getRichHtmlContent() {
+        // Produce clean HTML with inline indent & list markers for external pasting
+        const clone = quill.root.cloneNode(true);
+        clone.querySelectorAll('.ql-ui').forEach((el) => el.remove());
+        clone.querySelectorAll('[class*="ql-indent-"]').forEach((el) => {
+          const m = el.className.match(/ql-indent-(\d+)/);
+          if (m && el.tagName !== 'LI') {
+            const lvl = parseInt(m[1], 10);
+            el.style.marginLeft = `${lvl * 2}ch`;
+          }
+        });
+        return clone.innerHTML;
+      }
+
+      async function copyTextToClipboard(text, successMsg) {
+        try {
+          await navigator.clipboard.writeText(text);
+          showToast(successMsg);
+        } catch (e) {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          showToast(successMsg);
+        }
+      }
+
+      async function copyRichToClipboard() {
+        const html = getRichHtmlContent();
+        const plain = getPlainTextContent();
+        try {
+          if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
+            const item = new ClipboardItem({
+              'text/html': new Blob([html], { type: 'text/html' }),
+              'text/plain': new Blob([plain], { type: 'text/plain' })
+            });
+            await navigator.clipboard.write([item]);
+            showToast('已複製富文字到剪貼簿');
+            return;
+          }
+        } catch (e) {
+          // Fallback below
+        }
+        const div = document.createElement('div');
+        div.contentEditable = 'true';
+        div.style.position = 'fixed';
+        div.style.left = '-9999px';
+        div.innerHTML = html;
+        document.body.appendChild(div);
+        const sel = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(div);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        document.execCommand('copy');
+        sel.removeAllRanges();
+        document.body.removeChild(div);
+        showToast('已複製富文字到剪貼簿');
+      }
+
+      // =========================================================================
+      // 7. Insert Symbol Helper
+      // =========================================================================
+      function insertSymbol(sym) {
+        quill.focus();
+        const range = quill.getSelection(true);
+        const index = range ? range.index : quill.getLength() - 1;
+        if (range && range.length > 0) {
+          quill.deleteText(index, range.length, 'user');
+        }
+        quill.insertText(index, sym, 'user');
+        quill.setSelection(index + sym.length, 0, 'silent');
+      }
+
+      // =========================================================================
+      // 8. Basic Toolbar Item Builders & Actions
+      // =========================================================================
+      const ICONS = {
+        bold: '<svg viewBox="0 0 24 24"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg>',
+        italic: '<svg viewBox="0 0 24 24"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>',
+        underline: '<svg viewBox="0 0 24 24"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/><line x1="4" y1="21" x2="20" y2="21"/></svg>',
+        clean: '<svg viewBox="0 0 24 24"><path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg>',
+        bullet: '<svg viewBox="0 0 24 24"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4.5" cy="6" r="1.2" fill="currentColor"/><circle cx="4.5" cy="12" r="1.2" fill="currentColor"/><circle cx="4.5" cy="18" r="1.2" fill="currentColor"/></svg>',
+        ordered: '<svg viewBox="0 0 24 24"><line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/></svg>',
+        indent: '<svg viewBox="0 0 24 24"><polyline points="3 8 7 12 3 16"/><line x1="21" y1="12" x2="11" y2="12"/><line x1="21" y1="6" x2="11" y2="6"/><line x1="21" y1="18" x2="11" y2="18"/></svg>',
+        outdent: '<svg viewBox="0 0 24 24"><polyline points="7 8 3 12 7 16"/><line x1="21" y1="12" x2="11" y2="12"/><line x1="21" y1="6" x2="11" y2="6"/><line x1="21" y1="18" x2="11" y2="18"/></svg>',
+        painter: '<svg viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Z"/><path d="M10 11v4a2 2 0 0 0 2 2v4"/><path d="M12 17h0"/></svg>',
+        cut: '<svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>',
+        copy: '<svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+        paste: '<svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>',
+        undo: '<svg viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>',
+        redo: '<svg viewBox="0 0 24 24"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>',
+        settings: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>'
+      };
+
+      const basicControlRefs = {};
+
+      function createBasicItemElement(id) {
+        if (id === 'font') {
+          const sel = document.createElement('select');
+          sel.className = 'tb-select';
+          sel.title = '字型';
+          FONT_FAMILIES.forEach((f) => {
+            const opt = document.createElement('option');
+            opt.value = f.value;
+            opt.textContent = f.label;
+            sel.appendChild(opt);
+          });
+          sel.addEventListener('change', () => {
+            quill.focus();
+            quill.format('font', sel.value || false, 'user');
+          });
+          basicControlRefs.font = sel;
+          return sel;
+        }
+
+        if (id === 'size') {
+          const sel = document.createElement('select');
+          sel.className = 'tb-select';
+          sel.title = '字體大小';
+          FONT_SIZES.forEach((s) => {
+            const opt = document.createElement('option');
+            opt.value = s.value;
+            opt.textContent = s.label;
+            sel.appendChild(opt);
+          });
+          sel.addEventListener('change', () => {
+            quill.focus();
+            quill.format('size', sel.value || false, 'user');
+          });
+          basicControlRefs.size = sel;
+          return sel;
+        }
+
+        if (id === 'color') {
+          const wrap = document.createElement('div');
+          wrap.className = 'color-wrapper';
+
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'tb-btn';
+          btn.title = '文字顏色';
+          btn.innerHTML = `<span class="color-btn-inner"><span>A</span><span class="color-indicator" id="colorIndicator"></span></span>`;
+
+          const popover = document.createElement('div');
+          popover.className = 'color-popover';
+
+          const grid = document.createElement('div');
+          grid.className = 'color-grid';
+          COLOR_PALETTE.forEach((hex) => {
+            const sw = document.createElement('button');
+            sw.type = 'button';
+            sw.className = 'color-swatch';
+            sw.style.background = hex;
+            sw.title = hex;
+            sw.addEventListener('click', (e) => {
+              e.stopPropagation();
+              quill.focus();
+              quill.format('color', hex, 'user');
+              document.getElementById('colorIndicator').style.background = hex;
+              popover.classList.remove('open');
+            });
+            grid.appendChild(sw);
+          });
+
+          const customRow = document.createElement('div');
+          customRow.className = 'color-custom-row';
+          customRow.innerHTML = '<span>自訂顏色</span>';
+          const colorInput = document.createElement('input');
+          colorInput.type = 'color';
+          colorInput.value = '#ef4444';
+          colorInput.addEventListener('input', () => {
+            quill.format('color', colorInput.value, 'user');
+            document.getElementById('colorIndicator').style.background = colorInput.value;
+          });
+          const clearColorBtn = document.createElement('button');
+          clearColorBtn.type = 'button';
+          clearColorBtn.className = 'mini-btn';
+          clearColorBtn.textContent = '預設';
+          clearColorBtn.addEventListener('click', () => {
+            quill.format('color', false, 'user');
+            document.getElementById('colorIndicator').style.background = 'currentColor';
+            popover.classList.remove('open');
+          });
+          customRow.appendChild(colorInput);
+          customRow.appendChild(clearColorBtn);
+
+          popover.appendChild(grid);
+          popover.appendChild(customRow);
+
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            popover.classList.toggle('open');
+          });
+
+          document.addEventListener('click', (e) => {
+            if (!wrap.contains(e.target)) popover.classList.remove('open');
+          });
+
+          wrap.appendChild(btn);
+          wrap.appendChild(popover);
+          basicControlRefs.color = btn;
+          return wrap;
+        }
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'tb-btn';
+
+        switch (id) {
+          case 'bold':
+            btn.title = '粗體 (Ctrl+B)';
+            btn.innerHTML = ICONS.bold;
+            btn.addEventListener('click', () => {
+              quill.focus();
+              const fmt = quill.getFormat();
+              quill.format('bold', !fmt.bold, 'user');
+              updateToolbarActiveStates();
+            });
+            break;
+          case 'italic':
+            btn.title = '斜體 (Ctrl+I)';
+            btn.innerHTML = ICONS.italic;
+            btn.addEventListener('click', () => {
+              quill.focus();
+              const fmt = quill.getFormat();
+              quill.format('italic', !fmt.italic, 'user');
+              updateToolbarActiveStates();
+            });
+            break;
+          case 'underline':
+            btn.title = '底線 (Ctrl+U)';
+            btn.innerHTML = ICONS.underline;
+            btn.addEventListener('click', () => {
+              quill.focus();
+              const fmt = quill.getFormat();
+              quill.format('underline', !fmt.underline, 'user');
+              updateToolbarActiveStates();
+            });
+            break;
+          case 'clean':
+            btn.title = '清除格式';
+            btn.innerHTML = ICONS.clean;
+            btn.addEventListener('click', () => {
+              quill.focus();
+              const range = quill.getSelection();
+              if (range) {
+                quill.removeFormat(range.index, range.length || 0, 'user');
+                ['bold', 'italic', 'underline', 'color', 'background', 'font', 'size'].forEach((k) => {
+                  quill.format(k, false, 'user');
+                });
+              }
+              updateToolbarActiveStates();
+            });
+            break;
+          case 'bullet':
+            btn.title = '符號清單 (⦁ ◦ ▪ ▫ ▴ ▵)';
+            btn.innerHTML = ICONS.bullet;
+            btn.addEventListener('click', () => {
+              quill.focus();
+              const fmt = quill.getFormat();
+              quill.format('list', fmt.list === 'bullet' ? false : 'bullet', 'user');
+              updateToolbarActiveStates();
+            });
+            break;
+          case 'ordered':
+            btn.title = '數字清單 (1. / 1.1. / 1.1.1.)';
+            btn.innerHTML = ICONS.ordered;
+            btn.addEventListener('click', () => {
+              quill.focus();
+              const fmt = quill.getFormat();
+              quill.format('list', fmt.list === 'ordered' ? false : 'ordered', 'user');
+              updateToolbarActiveStates();
+            });
+            break;
+          case 'indent':
+            btn.title = '增加縮排（兩個半型空白）';
+            btn.innerHTML = ICONS.indent;
+            btn.addEventListener('click', () => {
+              quill.focus();
+              const fmt = quill.getFormat();
+              const cur = fmt.indent || 0;
+              if (cur < 5 || (!fmt.list && cur < 8)) {
+                quill.format('indent', '+1', 'user');
+              }
+            });
+            break;
+          case 'outdent':
+            btn.title = '減少縮排';
+            btn.innerHTML = ICONS.outdent;
+            btn.addEventListener('click', () => {
+              quill.focus();
+              quill.format('indent', '-1', 'user');
+            });
+            break;
+          case 'painter':
+            btn.title = '複製格式（單擊套用一次，雙擊鎖定連續套用）';
+            btn.innerHTML = ICONS.painter;
+            btn.addEventListener('click', handlePainterClick);
+            break;
+          case 'cut':
+            btn.title = '剪下';
+            btn.innerHTML = ICONS.cut;
+            btn.addEventListener('click', async () => {
+              quill.focus();
+              const range = quill.getSelection();
+              if (!range || range.length === 0) return;
+              const selectedText = quill.getText(range.index, range.length);
+              await copyTextToClipboard(selectedText, '已剪下選取文字');
+              quill.deleteText(range.index, range.length, 'user');
+            });
+            break;
+          case 'copy':
+            btn.title = '複製';
+            btn.innerHTML = ICONS.copy;
+            btn.addEventListener('click', async () => {
+              quill.focus();
+              const range = quill.getSelection();
+              if (!range || range.length === 0) return;
+              const selectedText = quill.getText(range.index, range.length);
+              await copyTextToClipboard(selectedText, '已複製選取文字');
+            });
+            break;
+          case 'paste':
+            btn.title = '貼上';
+            btn.innerHTML = ICONS.paste;
+            btn.addEventListener('click', async () => {
+              quill.focus();
+              try {
+                const text = await navigator.clipboard.readText();
+                if (text) insertSymbol(text);
+              } catch (e) {
+                showToast('瀏覽器限制按鈕讀取剪貼簿，請使用 Ctrl+V 貼上');
+              }
+            });
+            break;
+          case 'undo':
+            btn.title = '上一步 (Ctrl+Z)';
+            btn.innerHTML = ICONS.undo;
+            btn.addEventListener('click', () => {
+              quill.history.undo();
+            });
+            break;
+          case 'redo':
+            btn.title = '下一步 (Ctrl+Y)';
+            btn.innerHTML = ICONS.redo;
+            btn.addEventListener('click', () => {
+              quill.history.redo();
+            });
+            break;
+          case 'copyText':
+            btn.title = '複製為純文字（含兩格空白縮排與清單符號）';
+            btn.textContent = '純文字';
+            btn.addEventListener('click', () => {
+              copyTextToClipboard(getPlainTextContent(), '已複製純文字到剪貼簿');
+            });
+            break;
+          case 'copyRich':
+            btn.title = '複製為富文字（HTML 格式）';
+            btn.textContent = '富文字';
+            btn.addEventListener('click', copyRichToClipboard);
+            break;
+          case 'copyMd':
+            btn.title = '複製為 Markdown 格式';
+            btn.textContent = 'MD';
+            btn.addEventListener('click', () => {
+              copyTextToClipboard(getMarkdownContent(), '已複製 Markdown 到剪貼簿');
+            });
+            break;
+        }
+
+        basicControlRefs[id] = btn;
+        return btn;
+      }
+
+      function updateToolbarActiveStates() {
+        const range = quill.getSelection();
+        const fmt = range ? quill.getFormat(range) : {};
+
+        if (basicControlRefs.bold) basicControlRefs.bold.classList.toggle('active', Boolean(fmt.bold));
+        if (basicControlRefs.italic) basicControlRefs.italic.classList.toggle('active', Boolean(fmt.italic));
+        if (basicControlRefs.underline) basicControlRefs.underline.classList.toggle('active', Boolean(fmt.underline));
+        if (basicControlRefs.bullet) basicControlRefs.bullet.classList.toggle('active', fmt.list === 'bullet');
+        if (basicControlRefs.ordered) basicControlRefs.ordered.classList.toggle('active', fmt.list === 'ordered');
+
+        if (basicControlRefs.font) basicControlRefs.font.value = fmt.font || '';
+        if (basicControlRefs.size) basicControlRefs.size.value = fmt.size || '';
+
+        const ind = document.getElementById('colorIndicator');
+        if (ind) ind.style.background = fmt.color || '#ef4444';
+
+        if (basicControlRefs.painter) {
+          basicControlRefs.painter.classList.toggle('active', painterMode === 'once');
+          basicControlRefs.painter.classList.toggle('locked', painterMode === 'locked');
+        }
+      }
+
+      // =========================================================================
+      // 9. Render Toolbars Dynamically Based on User Config
+      // =========================================================================
+      const toolbarsContainer = document.getElementById('toolbarsContainer');
+
+      function switchPunctuationBar(fromId, toId) {
+        config.toolbars.forEach((tb) => {
+          if (tb.id === fromId) tb.enabled = false;
+          if (tb.id === toId) tb.enabled = true;
+        });
+        saveConfig();
+        renderToolbars();
+        renderSettingsLists();
+      }
+
+      function renderSymbolRow(id, label, symbols, switchTarget) {
+        const row = document.createElement('div');
+        row.className = 'toolbar-row';
+        row.dataset.toolbarId = id;
+
+        const lbl = document.createElement('span');
+        lbl.className = 'toolbar-label';
+        lbl.textContent = label;
+        row.appendChild(lbl);
+
+        symbols.forEach((sym) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'tb-btn sym-btn';
+          btn.textContent = sym;
+          btn.title = `插入「${sym}」`;
+          btn.addEventListener('click', () => insertSymbol(sym));
+          row.appendChild(btn);
+        });
+
+        if (switchTarget) {
+          const swBtn = document.createElement('button');
+          swBtn.type = 'button';
+          swBtn.className = 'tb-btn switch-btn';
+          swBtn.textContent = switchTarget.btnText;
+          swBtn.title = `切換為${TOOLBAR_META[switchTarget.to].label}`;
+          swBtn.addEventListener('click', () => switchPunctuationBar(id, switchTarget.to));
+          row.appendChild(swBtn);
+        }
+
+        return row;
+      }
+
+      function renderToolbars() {
+        toolbarsContainer.innerHTML = '';
+        Object.keys(basicControlRefs).forEach((k) => delete basicControlRefs[k]);
+
+        let settingsBtnPlaced = false;
+
+        config.toolbars.forEach((tb) => {
+          if (!tb.enabled) return;
+
+          if (tb.id === 'basic') {
+            const row = document.createElement('div');
+            row.className = 'toolbar-row';
+            row.dataset.toolbarId = 'basic';
+
+            config.basicItems.forEach((item) => {
+              if (!item.enabled) return;
+              row.appendChild(createBasicItemElement(item.id));
+            });
+
+            if (!settingsBtnPlaced) {
+              const spacer = document.createElement('div');
+              spacer.className = 'toolbar-spacer';
+              row.appendChild(spacer);
+              row.appendChild(createSettingsButton());
+              settingsBtnPlaced = true;
+            }
+
+            toolbarsContainer.appendChild(row);
+          } else if (tb.id === 'zhPunct') {
+            const row = renderSymbolRow('zhPunct', '中文標點', ZH_PUNCTUATION, {
+              to: 'enPunct',
+              btnText: '切換英文標點'
+            });
+            toolbarsContainer.appendChild(row);
+          } else if (tb.id === 'enPunct') {
+            const row = renderSymbolRow('enPunct', '英文標點', EN_PUNCTUATION, {
+              to: 'zhPunct',
+              btnText: '切換中文標點'
+            });
+            toolbarsContainer.appendChild(row);
+          } else if (tb.id === 'otherSymbols') {
+            toolbarsContainer.appendChild(renderSymbolRow('otherSymbols', '其他符號', OTHER_SYMBOLS));
+          } else if (tb.id === 'bopomofo') {
+            toolbarsContainer.appendChild(renderSymbolRow('bopomofo', '注音符號', BOPOMOFO_SYMBOLS));
+          }
+        });
+
+        // If user hid all toolbars or basic toolbar, ensure settings button is still reachable
+        if (!settingsBtnPlaced) {
+          const fallbackRow = document.createElement('div');
+          fallbackRow.className = 'toolbar-row';
+          const spacer = document.createElement('div');
+          spacer.className = 'toolbar-spacer';
+          fallbackRow.appendChild(spacer);
+          fallbackRow.appendChild(createSettingsButton());
+          toolbarsContainer.appendChild(fallbackRow);
+        }
+
+        updateToolbarActiveStates();
+        notifyHeight();
+      }
+
+      function createSettingsButton() {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'tb-btn';
+        btn.title = '設定與自訂工具列';
+        btn.innerHTML = ICONS.settings;
+        btn.addEventListener('click', openSettingsModal);
+        return btn;
+      }
+
+      // =========================================================================
+      // 10. Settings Modal (Theme, Toolbar Order/Visibility, Reset)
+      // =========================================================================
+      const settingsModal = document.getElementById('settingsModal');
+      const toolbarOrderList = document.getElementById('toolbarOrderList');
+      const basicItemOrderList = document.getElementById('basicItemOrderList');
+
+      function openSettingsModal() {
+        renderSettingsLists();
+        settingsModal.classList.add('open');
+      }
+
+      function closeSettingsModal() {
+        settingsModal.classList.remove('open');
+      }
+
+      document.getElementById('closeSettingsBtn').addEventListener('click', closeSettingsModal);
+      document.getElementById('doneSettingsBtn').addEventListener('click', closeSettingsModal);
+      settingsModal.addEventListener('click', (e) => {
+        if (e.target === settingsModal) closeSettingsModal();
+      });
+
+      document.getElementById('themeOptions').addEventListener('click', (e) => {
+        const card = e.target.closest('.theme-card');
+        if (!card) return;
+        config.theme = card.dataset.themeVal;
+        applyTheme(config.theme);
+        saveConfig();
+      });
+
+      document.getElementById('resetSettingsBtn').addEventListener('click', () => {
+        config = cloneDefaultConfig();
+        applyTheme(config.theme);
+        saveConfig();
+        renderToolbars();
+        renderSettingsLists();
+        showToast('已復原為預設工具列與外觀設定');
+      });
+
+      function buildSortableList(container, items, metaMap, onUpdate) {
+        container.innerHTML = '';
+        let dragSrcIndex = null;
+
+        items.forEach((item, idx) => {
+          const row = document.createElement('div');
+          row.className = 'sortable-item';
+          row.draggable = true;
+
+          const left = document.createElement('label');
+          left.className = 'sortable-left';
+
+          const handle = document.createElement('span');
+          handle.className = 'drag-handle';
+          handle.textContent = '⋮⋮';
+
+          const cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.checked = item.enabled;
+          cb.addEventListener('change', () => {
+            item.enabled = cb.checked;
+            onUpdate();
+          });
+
+          const text = document.createElement('span');
+          text.textContent = metaMap[item.id] ? metaMap[item.id].label : item.id;
+
+          left.appendChild(handle);
+          left.appendChild(cb);
+          left.appendChild(text);
+
+          const arrows = document.createElement('div');
+          arrows.className = 'sort-arrows';
+
+          const upBtn = document.createElement('button');
+          upBtn.type = 'button';
+          upBtn.className = 'mini-btn';
+          upBtn.textContent = '↑';
+          upBtn.disabled = idx === 0;
+          upBtn.addEventListener('click', () => {
+            if (idx === 0) return;
+            [items[idx - 1], items[idx]] = [items[idx], items[idx - 1]];
+            onUpdate();
+            renderSettingsLists();
+          });
+
+          const downBtn = document.createElement('button');
+          downBtn.type = 'button';
+          downBtn.className = 'mini-btn';
+          downBtn.textContent = '↓';
+          downBtn.disabled = idx === items.length - 1;
+          downBtn.addEventListener('click', () => {
+            if (idx === items.length - 1) return;
+            [items[idx + 1], items[idx]] = [items[idx], items[idx + 1]];
+            onUpdate();
+            renderSettingsLists();
+          });
+
+          arrows.appendChild(upBtn);
+          arrows.appendChild(downBtn);
+
+          row.addEventListener('dragstart', () => {
+            dragSrcIndex = idx;
+            row.classList.add('dragging');
+          });
+          row.addEventListener('dragend', () => {
+            row.classList.remove('dragging');
+          });
+          row.addEventListener('dragover', (e) => {
+            e.preventDefault();
+          });
+          row.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (dragSrcIndex === null || dragSrcIndex === idx) return;
+            const moved = items.splice(dragSrcIndex, 1)[0];
+            items.splice(idx, 0, moved);
+            dragSrcIndex = null;
+            onUpdate();
+            renderSettingsLists();
+          });
+
+          row.appendChild(left);
+          row.appendChild(arrows);
+          container.appendChild(row);
+        });
+      }
+
+      function renderSettingsLists() {
+        buildSortableList(toolbarOrderList, config.toolbars, TOOLBAR_META, () => {
+          saveConfig();
+          renderToolbars();
+        });
+        buildSortableList(basicItemOrderList, config.basicItems, BASIC_ITEM_META, () => {
+          saveConfig();
+          renderToolbars();
+        });
+      }
+
+      // =========================================================================
+      // 11. window.postMessage Communication Interface (for <iframe> embedding)
+      // =========================================================================
+      let changeTimer = null;
+      let lastNotifiedHeight = 0;
+
+      function postToParent(payload) {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage(payload, '*');
+        }
+      }
+
+      function notifyHeight() {
+        const height = Math.ceil(document.getElementById('editorShell').getBoundingClientRect().height);
+        if (height > 0 && height !== lastNotifiedHeight) {
+          lastNotifiedHeight = height;
+          postToParent({ type: 'editor:resize', height });
+        }
+      }
+
+      function emitContentChange() {
+        postToParent({
+          type: 'editor:change',
+          html: getRichHtmlContent(),
+          text: getPlainTextContent(),
+          markdown: getMarkdownContent()
+        });
+      }
+
+      quill.on('text-change', (_delta, _oldDelta, source) => {
+        updateToolbarActiveStates();
+        notifyHeight();
+        if (source === 'user') {
+          clearTimeout(changeTimer);
+          changeTimer = setTimeout(emitContentChange, 150);
+        }
+      });
+
+      quill.on('selection-change', () => {
+        updateToolbarActiveStates();
+      });
+
+      // Observe layout size changes for automatic iframe height sync
+      if (typeof ResizeObserver !== 'undefined') {
+        const ro = new ResizeObserver(() => {
+          notifyHeight();
+        });
+        ro.observe(document.getElementById('editorShell'));
+      }
+
+      window.addEventListener('message', (event) => {
+        const data = event.data;
+        if (!data || typeof data !== 'object' || typeof data.type !== 'string') return;
+
+        switch (data.type) {
+          case 'editor:setContent': {
+            const format = data.format === 'text' ? 'text' : 'html';
+            const content = typeof data.content === 'string' ? data.content : '';
+            if (format === 'text') {
+              quill.setText(content, 'silent');
+            } else {
+              quill.clipboard.dangerouslyPasteHTML(content, 'silent');
+            }
+            notifyHeight();
+            break;
+          }
+          case 'editor:getContent': {
+            const target = event.source || window.parent;
+            if (target && target !== window) {
+              target.postMessage(
+                {
+                  type: 'editor:content',
+                  requestId: data.requestId || null,
+                  html: getRichHtmlContent(),
+                  text: getPlainTextContent(),
+                  markdown: getMarkdownContent()
+                },
+                '*'
+              );
+            }
+            break;
+          }
+          case 'editor:setTheme': {
+            if (['light', 'dark', 'eyecare'].includes(data.theme)) {
+              config.theme = data.theme;
+              applyTheme(config.theme);
+              saveConfig();
+            }
+            break;
+          }
+          case 'editor:setConfig': {
+            if (typeof data.readOnly === 'boolean') {
+              quill.enable(!data.readOnly);
+            }
+            if (typeof data.placeholder === 'string') {
+              quill.root.setAttribute('data-placeholder', data.placeholder);
+            }
+            break;
+          }
+          case 'editor:focus': {
+            quill.focus();
+            break;
+          }
+        }
+      });
+
+      // =========================================================================
+      // 12. Initial Render & Ready Signal
+      // =========================================================================
+      renderToolbars();
+      notifyHeight();
+      postToParent({ type: 'editor:ready' });
+    })();
+  </script>
+</body>
+</html>
