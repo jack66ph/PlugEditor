@@ -858,14 +858,15 @@
 
     .mobile-tb-tab {
       flex-shrink: 0;
-      height: 30px;
+      min-width: 34px;
+      height: 32px;
       padding: 0 10px;
       border: 1px solid var(--border-subtle);
       border-radius: 999px;
       background: var(--bg-editor);
       color: var(--text-secondary);
-      font-size: 12.5px;
-      font-weight: 500;
+      font-size: 13.5px;
+      font-weight: 600;
       font-family: inherit;
       cursor: pointer;
       white-space: nowrap;
@@ -898,7 +899,9 @@
     [data-layout="mobile"] .toolbar-row.mobile-active {
       display: flex;
       flex-wrap: nowrap;
+      align-items: center;
       overflow-x: auto;
+      overflow-y: hidden;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
       padding: 7px 8px;
@@ -910,51 +913,37 @@
       display: none;
     }
 
-    [data-layout="mobile"] .toolbar-row.mobile-active[data-toolbar-id="basic"] .tb-btn,
-    [data-layout="mobile"] .toolbar-row.mobile-active[data-toolbar-id="basic"] .tb-select {
+    [data-layout="mobile"] .toolbar-row.mobile-active .toolbar-label {
+      display: none;
+    }
+
+    [data-layout="mobile"] .toolbar-row.mobile-active .tb-btn,
+    [data-layout="mobile"] .toolbar-row.mobile-active .tb-select {
       flex-shrink: 0;
       height: 36px;
     }
 
-    [data-layout="mobile"] .toolbar-row.mobile-active[data-toolbar-id="basic"] .tb-btn {
+    [data-layout="mobile"] .toolbar-row.mobile-active .tb-btn {
       min-width: 36px;
       padding: 0 8px;
     }
 
-    [data-layout="mobile"] .toolbar-row.mobile-active[data-toolbar-id="basic"] .tb-select {
-      font-size: 13px;
-      padding: 0 8px;
-    }
-
-    [data-layout="mobile"] .toolbar-row.mobile-active.mobile-symbol-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
-      gap: 5px;
-      padding: 8px;
-      max-height: 152px;
-      overflow-y: auto;
-      overflow-x: hidden;
-      align-items: stretch;
-    }
-
-    [data-layout="mobile"] .toolbar-row.mobile-active.mobile-symbol-grid .toolbar-label {
-      display: none;
-    }
-
-    [data-layout="mobile"] .toolbar-row.mobile-active.mobile-symbol-grid .tb-btn.sym-btn {
-      width: 100%;
-      min-width: 0;
-      height: 38px;
+    [data-layout="mobile"] .toolbar-row.mobile-active .tb-btn.sym-btn {
+      min-width: 38px;
       font-size: 16px;
       border-radius: 6px;
     }
 
-    [data-layout="mobile"] .toolbar-row.mobile-active.mobile-symbol-grid .tb-btn.switch-btn {
-      grid-column: 1 / -1;
-      height: 34px;
+    [data-layout="mobile"] .toolbar-row.mobile-active .tb-btn.switch-btn {
+      padding: 0 10px;
       font-size: 12.5px;
-      margin-top: 2px;
+      white-space: nowrap;
       border-radius: 6px;
+    }
+
+    [data-layout="mobile"] .toolbar-row.mobile-active .tb-select {
+      font-size: 13px;
+      padding: 0 8px;
     }
 
     [data-layout="mobile"] .color-popover.open {
@@ -2178,7 +2167,7 @@
 
       function renderSymbolRow(id, label, items, switchTarget) {
         const row = document.createElement('div');
-        row.className = 'toolbar-row mobile-symbol-grid';
+        row.className = 'toolbar-row';
         row.dataset.toolbarId = id;
 
         const lbl = document.createElement('span');
@@ -2244,35 +2233,68 @@
         mobileBottomBar.appendChild(rightGroup);
       }
 
+      function buildMobileTabDefs() {
+        const zhEnabled = Boolean(config.toolbars.find((t) => t.id === 'zhPunct')?.enabled);
+        const enEnabled = Boolean(config.toolbars.find((t) => t.id === 'enPunct')?.enabled);
+        const punctDefaultId = enEnabled && !zhEnabled ? 'enPunct' : 'zhPunct';
+
+        const tabs = [];
+        let punctAdded = false;
+
+        config.toolbars.forEach((tb) => {
+          if (tb.id === 'basic') {
+            tabs.push({ shortLabel: '基', title: '基本排版', ids: ['basic'], defaultId: 'basic' });
+          } else if (tb.id === 'zhPunct' || tb.id === 'enPunct') {
+            if (!punctAdded) {
+              tabs.push({
+                shortLabel: '標',
+                title: '標點符號（預設中文，可切換英文）',
+                ids: ['zhPunct', 'enPunct'],
+                defaultId: punctDefaultId
+              });
+              punctAdded = true;
+            }
+          } else if (tb.id === 'otherSymbols') {
+            tabs.push({ shortLabel: '他', title: '其他符號', ids: ['otherSymbols'], defaultId: 'otherSymbols' });
+          } else if (tb.id === 'bopomofo') {
+            tabs.push({ shortLabel: '注', title: '注音符號', ids: ['bopomofo'], defaultId: 'bopomofo' });
+          }
+        });
+
+        return tabs;
+      }
+
       function renderToolbars() {
         toolbarsContainer.innerHTML = '';
         Object.keys(basicControlRefs).forEach((k) => delete basicControlRefs[k]);
 
-        const enabledToolbars = config.toolbars.filter((tb) => tb.enabled);
-        if (enabledToolbars.length > 0 && !enabledToolbars.some((tb) => tb.id === mobileActiveToolbarId)) {
-          mobileActiveToolbarId = enabledToolbars[0].id;
-        }
+        const toolbarsToRender = currentResolvedMobile
+          ? config.toolbars
+          : config.toolbars.filter((tb) => tb.enabled);
 
         toolbarsContainer.classList.toggle('mobile-collapsed', Boolean(currentResolvedMobile && mobileToolbarCollapsed));
 
         if (currentResolvedMobile) {
+          const mobileTabs = buildMobileTabDefs();
           const mobileHeader = document.createElement('div');
           mobileHeader.className = 'mobile-toolbar-header';
 
           const tabsWrap = document.createElement('div');
           tabsWrap.className = 'mobile-tb-tabs';
 
-          enabledToolbars.forEach((tb) => {
+          mobileTabs.forEach((tab) => {
             const tabBtn = document.createElement('button');
             tabBtn.type = 'button';
-            const isActive = !mobileToolbarCollapsed && tb.id === mobileActiveToolbarId;
+            const isThisGroup = tab.ids.includes(mobileActiveToolbarId);
+            const isActive = !mobileToolbarCollapsed && isThisGroup;
             tabBtn.className = 'mobile-tb-tab' + (isActive ? ' active' : '');
-            tabBtn.textContent = TOOLBAR_META[tb.id]?.label || tb.id;
+            tabBtn.textContent = tab.shortLabel;
+            tabBtn.title = tab.title;
             tabBtn.addEventListener('click', () => {
-              if (mobileActiveToolbarId === tb.id) {
+              if (isThisGroup) {
                 mobileToolbarCollapsed = !mobileToolbarCollapsed;
               } else {
-                mobileActiveToolbarId = tb.id;
+                mobileActiveToolbarId = tab.defaultId;
                 mobileToolbarCollapsed = false;
               }
               renderToolbars();
@@ -2280,28 +2302,19 @@
             tabsWrap.appendChild(tabBtn);
           });
 
-          if (enabledToolbars.length === 0) {
-            const emptyHint = document.createElement('span');
-            emptyHint.className = 'toolbar-label';
-            emptyHint.textContent = '已隱藏所有工具列';
-            tabsWrap.appendChild(emptyHint);
-          }
-
           const actionsWrap = document.createElement('div');
           actionsWrap.className = 'mobile-header-actions';
 
-          if (enabledToolbars.length > 0) {
-            const toggleBtn = document.createElement('button');
-            toggleBtn.type = 'button';
-            toggleBtn.className = 'tb-btn';
-            toggleBtn.title = mobileToolbarCollapsed ? '展開工具列' : '收合工具列';
-            toggleBtn.textContent = mobileToolbarCollapsed ? '▾' : '▴';
-            toggleBtn.addEventListener('click', () => {
-              mobileToolbarCollapsed = !mobileToolbarCollapsed;
-              renderToolbars();
-            });
-            actionsWrap.appendChild(toggleBtn);
-          }
+          const toggleBtn = document.createElement('button');
+          toggleBtn.type = 'button';
+          toggleBtn.className = 'tb-btn';
+          toggleBtn.title = mobileToolbarCollapsed ? '展開工具列' : '收合工具列';
+          toggleBtn.textContent = mobileToolbarCollapsed ? '▾' : '▴';
+          toggleBtn.addEventListener('click', () => {
+            mobileToolbarCollapsed = !mobileToolbarCollapsed;
+            renderToolbars();
+          });
+          actionsWrap.appendChild(toggleBtn);
 
           actionsWrap.appendChild(createSettingsButton());
           mobileHeader.appendChild(tabsWrap);
@@ -2311,7 +2324,7 @@
 
         let settingsBtnPlaced = currentResolvedMobile;
 
-        enabledToolbars.forEach((tb) => {
+        toolbarsToRender.forEach((tb) => {
           let row = null;
 
           if (tb.id === 'basic') {
