@@ -727,7 +727,8 @@
       color: var(--text-secondary);
       font-size: 14px;
       line-height: 1;
-      padding: 0 2px;
+      padding: 4px 4px;
+      touch-action: none;
     }
 
     .sort-arrows {
@@ -900,17 +901,10 @@
       display: flex;
       flex-wrap: nowrap;
       align-items: center;
-      overflow-x: auto;
-      overflow-y: hidden;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-      padding: 7px 8px;
-      gap: 6px;
+      overflow: hidden;
+      padding: 5px 4px;
+      gap: 1px;
       border-bottom: none;
-    }
-
-    [data-layout="mobile"] .toolbar-row.mobile-active::-webkit-scrollbar {
-      display: none;
     }
 
     [data-layout="mobile"] .toolbar-row.mobile-active .toolbar-label {
@@ -920,30 +914,128 @@
     [data-layout="mobile"] .toolbar-row.mobile-active .tb-btn,
     [data-layout="mobile"] .toolbar-row.mobile-active .tb-select {
       flex-shrink: 0;
-      height: 36px;
+      height: 34px;
     }
 
     [data-layout="mobile"] .toolbar-row.mobile-active .tb-btn {
-      min-width: 36px;
-      padding: 0 8px;
+      min-width: 32px;
+      padding: 0 5px;
     }
 
     [data-layout="mobile"] .toolbar-row.mobile-active .tb-btn.sym-btn {
-      min-width: 38px;
-      font-size: 16px;
-      border-radius: 6px;
+      min-width: 34px;
+      font-size: 15.5px;
+      border-radius: 5px;
     }
 
     [data-layout="mobile"] .toolbar-row.mobile-active .tb-btn.switch-btn {
-      padding: 0 10px;
-      font-size: 12.5px;
+      padding: 0 8px;
+      font-size: 12px;
       white-space: nowrap;
+      border-radius: 5px;
+    }
+
+    .mobile-typography-btn {
+      font-family: Georgia, "Times New Roman", serif;
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .mobile-more-btn {
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      background: var(--bg-editor);
+      border-color: var(--border-subtle);
+    }
+
+    /* Mobile Floating Popovers (Typography & Overflow) */
+    .mobile-floating-popover {
+      position: fixed;
+      left: 50%;
+      bottom: 54px;
+      transform: translateX(-50%);
+      width: min(340px, calc(100vw - 20px));
+      max-height: 60vh;
+      overflow-y: auto;
+      padding: 12px;
+      background: var(--bg-modal);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      box-shadow: var(--shadow-md);
+      z-index: 1120;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .mobile-floating-popover.open {
+      display: flex;
+    }
+
+    .mobile-popover-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 6px;
+    }
+
+    .mobile-typography-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .mobile-typography-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .mobile-typography-field .tb-select {
+      width: 100%;
+      height: 36px;
+      font-size: 13.5px;
+    }
+
+    .mobile-overflow-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .mobile-overflow-grid .tb-btn {
+      min-width: 38px;
+      height: 38px;
+      padding: 0 9px;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-editor);
       border-radius: 6px;
     }
 
-    [data-layout="mobile"] .toolbar-row.mobile-active .tb-select {
-      font-size: 13px;
-      padding: 0 8px;
+    .mobile-overflow-grid .tb-btn.active {
+      background: var(--bg-toolbar-active);
+      color: var(--text-active);
+      border-color: rgba(37, 99, 235, 0.35);
+    }
+
+    .mobile-overflow-grid .tb-btn.locked {
+      background: var(--accent);
+      color: #ffffff;
+    }
+
+    .mobile-overflow-grid .tb-btn.sym-btn {
+      font-size: 16px;
+    }
+
+    .mobile-overflow-grid .tb-btn.switch-btn {
+      border-color: var(--accent);
+      color: var(--accent);
     }
 
     [data-layout="mobile"] .color-popover.open {
@@ -1031,9 +1123,10 @@
       grid-template-columns: repeat(2, 1fr);
     }
 
-    [data-layout="mobile"] .mini-btn {
-      width: 30px;
-      height: 30px;
+    [data-layout="mobile"] .sort-arrows .mini-btn {
+      width: 32px;
+      height: 32px;
+      padding: 0;
     }
 
     [data-layout="mobile"] .theme-options {
@@ -1113,6 +1206,31 @@
         <button type="button" class="btn-primary" id="doneSettingsBtn">完成</button>
       </div>
     </div>
+  </div>
+
+  <div class="mobile-floating-popover" id="mobileTypographyPopover" role="dialog" aria-label="字型與字體大小">
+    <div class="mobile-popover-header">
+      <span>字型與字體大小</span>
+      <button type="button" class="mini-btn" id="closeTypographyPopoverBtn" title="關閉">✕</button>
+    </div>
+    <div class="mobile-typography-fields">
+      <label class="mobile-typography-field">
+        <span>字型</span>
+        <select class="tb-select" id="mobileFontSelect"></select>
+      </label>
+      <label class="mobile-typography-field">
+        <span>字體大小</span>
+        <select class="tb-select" id="mobileSizeSelect"></select>
+      </label>
+    </div>
+  </div>
+
+  <div class="mobile-floating-popover" id="mobileOverflowPopover" role="dialog" aria-label="更多工具">
+    <div class="mobile-popover-header">
+      <span>更多工具</span>
+      <button type="button" class="mini-btn" id="closeOverflowPopoverBtn" title="關閉">✕</button>
+    </div>
+    <div class="mobile-overflow-grid" id="mobileOverflowGrid"></div>
   </div>
 
   <div class="toast" id="toast"></div>
@@ -2102,14 +2220,14 @@
             break;
           case 'copyText':
             btn.title = '複製為純文字（含兩格空白縮排與清單符號）';
-            btn.textContent = '純文字';
+            btn.textContent = currentResolvedMobile ? 'txt' : '純文字';
             btn.addEventListener('click', () => {
               copyTextToClipboard(getPlainTextContent(), '已複製純文字到剪貼簿');
             });
             break;
           case 'copyRich':
             btn.title = '複製為富文字（HTML 格式）';
-            btn.textContent = '富文字';
+            btn.textContent = currentResolvedMobile ? 'rtx' : '富文字';
             btn.addEventListener('click', copyRichToClipboard);
             break;
           case 'copyMd':
@@ -2200,6 +2318,162 @@
         return row;
       }
 
+      const mobileTypographyPopover = document.getElementById('mobileTypographyPopover');
+      const mobileFontSelect = document.getElementById('mobileFontSelect');
+      const mobileSizeSelect = document.getElementById('mobileSizeSelect');
+      const mobileOverflowPopover = document.getElementById('mobileOverflowPopover');
+      const mobileOverflowGrid = document.getElementById('mobileOverflowGrid');
+
+      function closeMobileFloatingPopovers() {
+        mobileTypographyPopover.classList.remove('open');
+        mobileOverflowPopover.classList.remove('open');
+        document.querySelectorAll('.color-popover.open').forEach((p) => p.classList.remove('open'));
+      }
+
+      function initMobileTypographyPopover() {
+        mobileFontSelect.innerHTML = '';
+        FONT_FAMILIES.forEach((f) => {
+          const opt = document.createElement('option');
+          opt.value = f.value;
+          opt.textContent = f.label;
+          mobileFontSelect.appendChild(opt);
+        });
+        mobileSizeSelect.innerHTML = '';
+        FONT_SIZES.forEach((s) => {
+          const opt = document.createElement('option');
+          opt.value = s.value;
+          opt.textContent = s.label;
+          mobileSizeSelect.appendChild(opt);
+        });
+
+        mobileFontSelect.addEventListener('change', () => {
+          quill.focus();
+          quill.format('font', mobileFontSelect.value || false, 'user');
+        });
+        mobileSizeSelect.addEventListener('change', () => {
+          quill.focus();
+          quill.format('size', mobileSizeSelect.value || false, 'user');
+        });
+
+        document.getElementById('closeTypographyPopoverBtn').addEventListener('click', () => {
+          mobileTypographyPopover.classList.remove('open');
+        });
+        document.getElementById('closeOverflowPopoverBtn').addEventListener('click', () => {
+          mobileOverflowPopover.classList.remove('open');
+        });
+
+        document.addEventListener('click', (e) => {
+          if (
+            !mobileTypographyPopover.contains(e.target) &&
+            !e.target.closest('.mobile-typography-btn')
+          ) {
+            mobileTypographyPopover.classList.remove('open');
+          }
+          if (
+            !mobileOverflowPopover.contains(e.target) &&
+            !e.target.closest('.mobile-more-btn')
+          ) {
+            mobileOverflowPopover.classList.remove('open');
+          }
+        });
+      }
+      initMobileTypographyPopover();
+
+      function createMobileTypographyButton() {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'tb-btn mobile-typography-btn';
+        btn.title = '字型與字體大小';
+        btn.textContent = 'T';
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const wasOpen = mobileTypographyPopover.classList.contains('open');
+          closeMobileFloatingPopovers();
+          if (!wasOpen) {
+            const range = quill.getSelection();
+            const fmt = range ? quill.getFormat(range) : {};
+            mobileFontSelect.value = fmt.font || '';
+            mobileSizeSelect.value = fmt.size || '';
+            mobileTypographyPopover.classList.add('open');
+          }
+        });
+        return btn;
+      }
+
+      function applyMobileToolbarOverflow(row) {
+        if (!row || !currentResolvedMobile || mobileToolbarCollapsed) return;
+
+        const existingMore = row.querySelector('.mobile-more-btn');
+        if (existingMore) existingMore.remove();
+
+        const items = Array.from(row.children).filter((el) => !el.classList.contains('toolbar-label'));
+        items.forEach((el) => { el.style.display = ''; });
+
+        const rowWidth = row.clientWidth;
+        if (rowWidth <= 0) return;
+
+        const style = getComputedStyle(row);
+        const available = rowWidth - parseFloat(style.paddingLeft || 0) - parseFloat(style.paddingRight || 0);
+        const gap = parseFloat(style.columnGap || style.gap || 1) || 1;
+        const moreBtnWidth = 34;
+
+        let totalNeeded = 0;
+        items.forEach((el, i) => {
+          totalNeeded += el.offsetWidth + (i > 0 ? gap : 0);
+        });
+
+        if (totalNeeded <= available) return;
+
+        let used = 0;
+        let visibleCount = 0;
+        const overflowItems = [];
+
+        items.forEach((el) => {
+          const w = el.offsetWidth;
+          const nextUsed = used + (visibleCount > 0 ? gap : 0) + w;
+          if (overflowItems.length === 0 && (visibleCount === 0 || nextUsed + gap + moreBtnWidth <= available)) {
+            used = nextUsed;
+            visibleCount++;
+          } else {
+            el.style.display = 'none';
+            overflowItems.push(el);
+          }
+        });
+
+        if (overflowItems.length > 0) {
+          const moreBtn = document.createElement('button');
+          moreBtn.type = 'button';
+          moreBtn.className = 'tb-btn mobile-more-btn';
+          moreBtn.title = '更多工具';
+          moreBtn.textContent = '...';
+          moreBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const wasOpen = mobileOverflowPopover.classList.contains('open');
+            closeMobileFloatingPopovers();
+            if (!wasOpen) {
+              mobileOverflowGrid.innerHTML = '';
+              overflowItems.forEach((origEl) => {
+                const origBtn = origEl.tagName === 'BUTTON' ? origEl : origEl.querySelector('button');
+                if (!origBtn) return;
+                const cloneBtn = document.createElement('button');
+                cloneBtn.type = 'button';
+                cloneBtn.className = origBtn.className;
+                cloneBtn.innerHTML = origBtn.innerHTML;
+                cloneBtn.title = origBtn.title;
+                cloneBtn.addEventListener('click', (ev) => {
+                  ev.stopPropagation();
+                  mobileOverflowPopover.classList.remove('open');
+                  origBtn.click();
+                });
+                mobileOverflowGrid.appendChild(cloneBtn);
+              });
+              mobileOverflowPopover.classList.add('open');
+            }
+          });
+          row.appendChild(moreBtn);
+        }
+      }
+
       function renderMobileBottomBar() {
         mobileBottomBar.innerHTML = '';
         if (!currentResolvedMobile) return;
@@ -2208,24 +2482,15 @@
         leftGroup.className = 'mobile-bottom-group';
 
         ['undo', 'redo', 'outdent', 'indent'].forEach((id) => {
-          const btn = createBasicItemElement(id);
-          leftGroup.appendChild(btn);
+          leftGroup.appendChild(createBasicItemElement(id));
         });
 
         const rightGroup = document.createElement('div');
         rightGroup.className = 'mobile-bottom-group';
 
-        [
-          { label: '純文字', handler: copyPlainText, title: '複製純文字' },
-          { label: '富文字', handler: copyRichHtml, title: '複製富文字' },
-          { label: 'MD', handler: copyMarkdown, title: '複製 Markdown' }
-        ].forEach(({ label, handler, title }) => {
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'tb-btn mobile-copy-pill';
-          btn.textContent = label;
-          btn.title = title;
-          btn.addEventListener('click', handler);
+        ['copyText', 'copyRich', 'copyMd'].forEach((id) => {
+          const btn = createBasicItemElement(id);
+          btn.classList.add('mobile-copy-pill');
           rightGroup.appendChild(btn);
         });
 
@@ -2323,6 +2588,8 @@
         }
 
         let settingsBtnPlaced = currentResolvedMobile;
+        let activeMobileRow = null;
+        closeMobileFloatingPopovers();
 
         toolbarsToRender.forEach((tb) => {
           let row = null;
@@ -2332,8 +2599,16 @@
             row.className = 'toolbar-row';
             row.dataset.toolbarId = 'basic';
 
+            let mobileTypographyPlaced = false;
             config.basicItems.forEach((item) => {
               if (!item.enabled) return;
+              if (currentResolvedMobile && (item.id === 'font' || item.id === 'size')) {
+                if (!mobileTypographyPlaced) {
+                  row.appendChild(createMobileTypographyButton());
+                  mobileTypographyPlaced = true;
+                }
+                return;
+              }
               row.appendChild(createBasicItemElement(item.id));
             });
 
@@ -2363,6 +2638,7 @@
           if (row) {
             if (currentResolvedMobile && !mobileToolbarCollapsed && tb.id === mobileActiveToolbarId) {
               row.classList.add('mobile-active');
+              activeMobileRow = row;
             }
             toolbarsContainer.appendChild(row);
           }
@@ -2381,6 +2657,10 @@
 
         renderMobileBottomBar();
         updateToolbarActiveStates();
+        if (activeMobileRow) {
+          applyMobileToolbarOverflow(activeMobileRow);
+          requestAnimationFrame(() => applyMobileToolbarOverflow(activeMobileRow));
+        }
         notifyHeight();
       }
 
@@ -2571,6 +2851,9 @@
         if (config.layoutMode === 'auto') {
           applyLayout(true);
         }
+        if (currentResolvedMobile && !mobileToolbarCollapsed) {
+          applyMobileToolbarOverflow(document.querySelector('.toolbar-row.mobile-active'));
+        }
       });
 
       document.getElementById('resetSettingsBtn').addEventListener('click', () => {
@@ -2587,9 +2870,18 @@
         container.innerHTML = '';
         let dragSrcIndex = null;
 
+        function moveItem(fromIdx, toIdx) {
+          if (fromIdx === null || fromIdx === toIdx || fromIdx < 0 || toIdx < 0) return;
+          const moved = items.splice(fromIdx, 1)[0];
+          items.splice(toIdx, 0, moved);
+          onUpdate();
+          renderSettingsLists();
+        }
+
         items.forEach((item, idx) => {
           const row = document.createElement('div');
           row.className = 'sortable-item';
+          row.dataset.sortIdx = String(idx);
           row.draggable = true;
 
           const left = document.createElement('label');
@@ -2622,10 +2914,14 @@
 
           const upBtn = document.createElement('button');
           upBtn.type = 'button';
+          upBtn.draggable = false;
           upBtn.className = 'mini-btn';
           upBtn.textContent = '↑';
           upBtn.disabled = idx === 0;
-          upBtn.addEventListener('click', () => {
+          upBtn.addEventListener('mousedown', (e) => e.stopPropagation());
+          upBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             if (idx === 0) return;
             [items[idx - 1], items[idx]] = [items[idx], items[idx - 1]];
             onUpdate();
@@ -2634,10 +2930,14 @@
 
           const downBtn = document.createElement('button');
           downBtn.type = 'button';
+          downBtn.draggable = false;
           downBtn.className = 'mini-btn';
           downBtn.textContent = '↓';
           downBtn.disabled = idx === items.length - 1;
-          downBtn.addEventListener('click', () => {
+          downBtn.addEventListener('mousedown', (e) => e.stopPropagation());
+          downBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             if (idx === items.length - 1) return;
             [items[idx + 1], items[idx]] = [items[idx], items[idx + 1]];
             onUpdate();
@@ -2647,9 +2947,18 @@
           arrows.appendChild(upBtn);
           arrows.appendChild(downBtn);
 
-          row.addEventListener('dragstart', () => {
+          // Desktop HTML5 Drag & Drop
+          row.addEventListener('dragstart', (e) => {
+            if (e.target && e.target.closest('.sort-arrows')) {
+              e.preventDefault();
+              return;
+            }
             dragSrcIndex = idx;
             row.classList.add('dragging');
+            if (e.dataTransfer) {
+              e.dataTransfer.effectAllowed = 'move';
+              e.dataTransfer.setData('text/plain', String(idx));
+            }
           });
           row.addEventListener('dragend', () => {
             row.classList.remove('dragging');
@@ -2659,12 +2968,39 @@
           });
           row.addEventListener('drop', (e) => {
             e.preventDefault();
-            if (dragSrcIndex === null || dragSrcIndex === idx) return;
-            const moved = items.splice(dragSrcIndex, 1)[0];
-            items.splice(idx, 0, moved);
+            const src = dragSrcIndex;
             dragSrcIndex = null;
-            onUpdate();
-            renderSettingsLists();
+            moveItem(src, idx);
+          });
+
+          // Mobile Touch Drag & Drop on handle
+          handle.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dragSrcIndex = idx;
+            row.classList.add('dragging');
+          }, { passive: false });
+
+          handle.addEventListener('touchmove', (e) => {
+            if (dragSrcIndex === null) return;
+            e.preventDefault();
+          }, { passive: false });
+
+          handle.addEventListener('touchend', (e) => {
+            row.classList.remove('dragging');
+            if (dragSrcIndex === null) return;
+            const touch = e.changedTouches && e.changedTouches[0];
+            const src = dragSrcIndex;
+            dragSrcIndex = null;
+            if (!touch) return;
+            const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+            const targetRow = targetEl ? targetEl.closest('.sortable-item') : null;
+            if (targetRow && container.contains(targetRow)) {
+              const toIdx = Number(targetRow.dataset.sortIdx);
+              if (!Number.isNaN(toIdx)) {
+                moveItem(src, toIdx);
+              }
+            }
           });
 
           row.appendChild(left);
@@ -2683,6 +3019,8 @@
       }
 
       function renderSettingsLists() {
+        const prevScrollTop = settingsModalBody.scrollTop;
+
         buildSortableList(toolbarOrderList, config.toolbars, TOOLBAR_META, () => {
           saveConfig();
           renderToolbars();
@@ -2705,6 +3043,7 @@
         });
 
         updateToolbarHiddenNotices();
+        settingsModalBody.scrollTop = prevScrollTop;
       }
 
       // =========================================================================
