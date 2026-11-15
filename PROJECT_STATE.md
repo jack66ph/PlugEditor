@@ -40,12 +40,16 @@
    - 主動通報高度變化 (`editor:resize`) 以便父層自適應高。
    - 內容變更通知 (`editor:change`，帶有 HTML、純文字、Markdown)。
    - 外部操控支援 (`editor:setContent`、`editor:getContent`、`editor:setTheme`、`editor:setConfig`、`editor:focus`、`editor:ready`)。
-7. **授權合規**：
+7. **GitHub 整合與發布支援**：
+   - 建立 LICENSE（MIT 授權，附 Quill 2 BSD-3-Clause 宣告）。
+   - 建立 README.md，提供完整 GitHub Pages 嵌入指南與 window.postMessage API 規格。
+   - 建立 index.html，作為 GitHub Pages 首頁與 iframe 雙向通訊測試示範頁面。
+8. **授權合規**：
    - 於檔案開頭 HTML 註解內嵌完整的 Quill 2 BSD-3-Clause 授權聲明。
    - 於設定視窗底部註明 Quill 2 核心技術與版權歸屬。
 
 ## 下一步規劃 / 待辦事項
 - （選用）以 Word 專用 `mso-list` 標記輸出，讓貼到 Word 的數字清單呈現 `1.1.`、`1.1.1.` 階層編號。
 - 注意：Word 若貼上預設為「合併格式設定」，會移除文字顏色與字型；需改為「保留原始格式設定」。
-- 依後續需求可新增外部示範頁面 (`index.html`) 展示 `iframe` 雙向通訊。
+- 依外部 App 需求規劃版本化發布策略（如 GitHub Releases / Tags）。
 - 支援圖片或附件上傳擴充（若有需要）。

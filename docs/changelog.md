@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - 2026-11-15
 
+### Added
+- **GitHub 發布與外部嵌入支援文件**：
+  - 新增 LICENSE（MIT 授權，附 Quill 2 BSD-3-Clause 條款宣告）。
+  - 新增 README.md，提供 GitHub Pages 嵌入範例與 window.postMessage 雙向通訊 API 規格文件。
+  - 新增 index.html，作為 GitHub Pages 預設首頁與 iframe 通訊即時示範頁面。
+
 ### Fixed
 - **清單重影**：Quill 2 內建 `.ql-ui` 清單標號與自訂 `li::before` 標號同時顯示，現已隱藏內建標號。
 - **複製富文字貼到 Word 格式遺失**：
