@@ -491,16 +491,16 @@
       margin-left: -6.0em;
     }
 
-    /* Settings Modal */
+    /* Settings Full-Screen Page */
     .modal-backdrop {
       position: fixed;
       inset: 0;
       background: rgba(15, 23, 42, 0.48);
       display: none;
-      align-items: center;
-      justify-content: center;
+      align-items: stretch;
+      justify-content: stretch;
       z-index: 999;
-      padding: 16px;
+      padding: 5px;
     }
 
     .modal-backdrop.open {
@@ -511,11 +511,12 @@
       background: var(--bg-modal);
       color: var(--text-primary);
       border: 1px solid var(--border-color);
-      border-radius: 10px;
+      border-radius: 8px;
       box-shadow: var(--shadow-md);
       width: 100%;
-      max-width: 560px;
-      max-height: 88vh;
+      height: 100%;
+      max-width: none;
+      max-height: none;
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -525,18 +526,116 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 16px;
+      padding: 10px 16px;
       border-bottom: 1px solid var(--border-subtle);
       font-weight: 600;
       font-size: 15px;
+      flex-shrink: 0;
     }
 
     .modal-body {
+      flex: 1;
+      min-height: 0;
       padding: 14px 16px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
       gap: 16px;
+    }
+
+    .modal-tabs {
+      display: flex;
+      gap: 4px;
+      padding: 8px 16px 0;
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg-toolbar);
+      overflow-x: auto;
+      flex-shrink: 0;
+    }
+
+    .modal-tab-btn {
+      padding: 7px 11px;
+      border: 1px solid transparent;
+      border-bottom: none;
+      border-radius: 6px 6px 0 0;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 12.5px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background-color 0.12s ease, color 0.12s ease;
+    }
+
+    .modal-tab-btn:hover {
+      background: var(--bg-toolbar-hover);
+      color: var(--text-primary);
+    }
+
+    .modal-tab-btn.active {
+      background: var(--bg-modal);
+      color: var(--accent);
+      border-color: var(--border-subtle);
+      font-weight: 600;
+      position: relative;
+      top: 1px;
+      padding-bottom: 8px;
+    }
+
+    .tab-panel {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .tab-panel.active {
+      display: flex;
+    }
+
+    .section-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .section-header-row h4 {
+      margin: 0;
+    }
+
+    .section-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .toolbar-hidden-notice {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--bg-toolbar);
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+
+    .sym-preview {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 24px;
+      height: 22px;
+      padding: 0 4px;
+      border-radius: 4px;
+      background: var(--bg-toolbar);
+      border: 1px solid var(--border-subtle);
+      font-weight: 600;
+      font-size: 13.5px;
     }
 
     .modal-footer {
@@ -590,8 +689,12 @@
 
     .sortable-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
       gap: 6px;
+    }
+
+    .sortable-grid.symbol-grid {
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     }
 
     .sortable-item {
@@ -709,6 +812,9 @@
       .sortable-grid {
         grid-template-columns: 1fr;
       }
+      .sortable-grid.symbol-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
       .theme-options {
         grid-template-columns: 1fr;
       }
@@ -730,28 +836,28 @@
         <span id="settingsTitle">編輯器設定與工具列自訂</span>
         <button type="button" class="tb-btn" id="closeSettingsBtn" title="關閉">✕</button>
       </div>
-      <div class="modal-body">
-        <div class="setting-section">
-          <h4>外觀模式</h4>
-          <div class="theme-options" id="themeOptions">
-            <button type="button" class="theme-card" data-theme-val="light">☀️ 白天模式</button>
-            <button type="button" class="theme-card" data-theme-val="dark">🌙 黑夜模式</button>
-            <button type="button" class="theme-card" data-theme-val="eyecare">🌿 護眼模式</button>
+      <div class="modal-tabs" id="settingsTabs" role="tablist" aria-label="設定分頁">
+        <button type="button" class="modal-tab-btn active" role="tab" aria-selected="true" data-settings-tab="general">一般設定</button>
+      </div>
+      <div class="modal-body" id="settingsModalBody">
+        <div class="tab-panel active" role="tabpanel" data-tab-panel="general">
+          <div class="setting-section">
+            <h4>外觀模式</h4>
+            <div class="theme-options" id="themeOptions">
+              <button type="button" class="theme-card" data-theme-val="light">☀️ 白天模式</button>
+              <button type="button" class="theme-card" data-theme-val="dark">🌙 黑夜模式</button>
+              <button type="button" class="theme-card" data-theme-val="eyecare">🌿 護眼模式</button>
+            </div>
           </div>
-        </div>
 
-        <div class="setting-section">
-          <h4>工具列顯示與排列順序（可拖曳或使用上下鍵）</h4>
-          <div class="sortable-list" id="toolbarOrderList"></div>
-        </div>
+          <div class="setting-section">
+            <h4>工具列顯示與排列順序（可拖曳或使用上下鍵）</h4>
+            <div class="sortable-list" id="toolbarOrderList"></div>
+          </div>
 
-        <div class="setting-section">
-          <h4>基本排版工具列按鈕自訂（勾選顯示與排序）</h4>
-          <div class="sortable-grid" id="basicItemOrderList"></div>
-        </div>
-
-        <div class="setting-section" style="font-size:11.5px; color:var(--text-secondary); border-top:1px solid var(--border-subtle); padding-top:10px;">
-          核心編輯器採用 <a href="https://github.com/slab/quill" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">Quill 2</a>（BSD-3-Clause 授權；Copyright &copy; 2017–2024 Slab, 2014 Jason Chen, 2013 salesforce.com）。
+          <div class="setting-section" style="font-size:11.5px; color:var(--text-secondary); border-top:1px solid var(--border-subtle); padding-top:10px;">
+            核心編輯器採用 <a href="https://github.com/slab/quill" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">Quill 2</a>（BSD-3-Clause 授權；Copyright &copy; 2017–2024 Slab, 2014 Jason Chen, 2013 salesforce.com）。
+          </div>
         </div>
       </div>
       <div class="modal-footer">
@@ -821,11 +927,11 @@
       ];
 
       const TOOLBAR_META = {
-        basic: { label: '基本排版工具列' },
-        zhPunct: { label: '中文標點符號' },
-        enPunct: { label: '英文標點符號' },
-        otherSymbols: { label: '其他符號' },
-        bopomofo: { label: '注音符號' }
+        basic: { label: '基本排版工具列', tabLabel: '基本排版' },
+        zhPunct: { label: '中文標點符號', tabLabel: '中文標點' },
+        enPunct: { label: '英文標點符號', tabLabel: '英文標點' },
+        otherSymbols: { label: '其他符號', tabLabel: '其他符號' },
+        bopomofo: { label: '注音符號', tabLabel: '注音符號' }
       };
 
       const BASIC_ITEM_META = {
@@ -850,6 +956,14 @@
         copyRich: { label: '複製富文字' },
         copyMd: { label: '複製 Markdown' }
       };
+
+      const TOOLBAR_ITEM_SCHEMAS = [
+        { id: 'basic', configKey: 'basicItems', meta: BASIC_ITEM_META, isSymbol: false },
+        { id: 'zhPunct', configKey: 'zhPunctItems', meta: null, isSymbol: true },
+        { id: 'enPunct', configKey: 'enPunctItems', meta: null, isSymbol: true },
+        { id: 'otherSymbols', configKey: 'otherSymbolsItems', meta: null, isSymbol: true },
+        { id: 'bopomofo', configKey: 'bopomofoItems', meta: null, isSymbol: true }
+      ];
 
       const DEFAULT_CONFIG = {
         theme: 'light',
@@ -881,7 +995,11 @@
           { id: 'copyText', enabled: true },
           { id: 'copyRich', enabled: true },
           { id: 'copyMd', enabled: true }
-        ]
+        ],
+        zhPunctItems: ZH_PUNCTUATION.map((sym) => ({ id: sym, enabled: true })),
+        enPunctItems: EN_PUNCTUATION.map((sym) => ({ id: sym, enabled: true })),
+        otherSymbolsItems: OTHER_SYMBOLS.map((sym) => ({ id: sym, enabled: true })),
+        bopomofoItems: BOPOMOFO_SYMBOLS.map((sym) => ({ id: sym, enabled: true }))
       };
 
       // =========================================================================
@@ -889,6 +1007,25 @@
       // =========================================================================
       function cloneDefaultConfig() {
         return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+      }
+
+      function mergeItemList(savedList, defaultList) {
+        if (!Array.isArray(savedList)) {
+          return defaultList.map((item) => ({ ...item }));
+        }
+        const validIds = new Set(defaultList.map((t) => t.id));
+        const merged = [];
+        const seen = new Set();
+        savedList.forEach((item) => {
+          if (item && validIds.has(item.id) && !seen.has(item.id)) {
+            merged.push({ id: item.id, enabled: Boolean(item.enabled) });
+            seen.add(item.id);
+          }
+        });
+        defaultList.forEach((item) => {
+          if (!seen.has(item.id)) merged.push({ ...item });
+        });
+        return merged;
       }
 
       function mergeConfig(saved) {
@@ -899,37 +1036,10 @@
           def.theme = saved.theme;
         }
 
-        if (Array.isArray(saved.toolbars)) {
-          const validIds = new Set(DEFAULT_CONFIG.toolbars.map((t) => t.id));
-          const merged = [];
-          const seen = new Set();
-          saved.toolbars.forEach((item) => {
-            if (item && validIds.has(item.id) && !seen.has(item.id)) {
-              merged.push({ id: item.id, enabled: Boolean(item.enabled) });
-              seen.add(item.id);
-            }
-          });
-          DEFAULT_CONFIG.toolbars.forEach((item) => {
-            if (!seen.has(item.id)) merged.push({ ...item });
-          });
-          def.toolbars = merged;
-        }
-
-        if (Array.isArray(saved.basicItems)) {
-          const validIds = new Set(DEFAULT_CONFIG.basicItems.map((t) => t.id));
-          const merged = [];
-          const seen = new Set();
-          saved.basicItems.forEach((item) => {
-            if (item && validIds.has(item.id) && !seen.has(item.id)) {
-              merged.push({ id: item.id, enabled: Boolean(item.enabled) });
-              seen.add(item.id);
-            }
-          });
-          DEFAULT_CONFIG.basicItems.forEach((item) => {
-            if (!seen.has(item.id)) merged.push({ ...item });
-          });
-          def.basicItems = merged;
-        }
+        def.toolbars = mergeItemList(saved.toolbars, DEFAULT_CONFIG.toolbars);
+        TOOLBAR_ITEM_SCHEMAS.forEach(({ configKey }) => {
+          def[configKey] = mergeItemList(saved[configKey], DEFAULT_CONFIG[configKey]);
+        });
 
         return def;
       }
@@ -1773,7 +1883,7 @@
         renderSettingsLists();
       }
 
-      function renderSymbolRow(id, label, symbols, switchTarget) {
+      function renderSymbolRow(id, label, items, switchTarget) {
         const row = document.createElement('div');
         row.className = 'toolbar-row';
         row.dataset.toolbarId = id;
@@ -1783,7 +1893,9 @@
         lbl.textContent = label;
         row.appendChild(lbl);
 
-        symbols.forEach((sym) => {
+        items.forEach((item) => {
+          if (!item.enabled) return;
+          const sym = item.id;
           const btn = document.createElement('button');
           btn.type = 'button';
           btn.className = 'tb-btn sym-btn';
@@ -1835,21 +1947,21 @@
 
             toolbarsContainer.appendChild(row);
           } else if (tb.id === 'zhPunct') {
-            const row = renderSymbolRow('zhPunct', '中文標點', ZH_PUNCTUATION, {
+            const row = renderSymbolRow('zhPunct', '中文標點', config.zhPunctItems, {
               to: 'enPunct',
               btnText: '切換英文標點'
             });
             toolbarsContainer.appendChild(row);
           } else if (tb.id === 'enPunct') {
-            const row = renderSymbolRow('enPunct', '英文標點', EN_PUNCTUATION, {
+            const row = renderSymbolRow('enPunct', '英文標點', config.enPunctItems, {
               to: 'zhPunct',
               btnText: '切換中文標點'
             });
             toolbarsContainer.appendChild(row);
           } else if (tb.id === 'otherSymbols') {
-            toolbarsContainer.appendChild(renderSymbolRow('otherSymbols', '其他符號', OTHER_SYMBOLS));
+            toolbarsContainer.appendChild(renderSymbolRow('otherSymbols', '其他符號', config.otherSymbolsItems));
           } else if (tb.id === 'bopomofo') {
-            toolbarsContainer.appendChild(renderSymbolRow('bopomofo', '注音符號', BOPOMOFO_SYMBOLS));
+            toolbarsContainer.appendChild(renderSymbolRow('bopomofo', '注音符號', config.bopomofoItems));
           }
         });
 
@@ -1879,14 +1991,149 @@
       }
 
       // =========================================================================
-      // 10. Settings Modal (Theme, Toolbar Order/Visibility, Reset)
+      // 10. Settings Modal (Theme, Toolbar Order/Visibility, Tabbed Item Customizer)
       // =========================================================================
       const settingsModal = document.getElementById('settingsModal');
+      const settingsTabs = document.getElementById('settingsTabs');
+      const settingsModalBody = document.getElementById('settingsModalBody');
       const toolbarOrderList = document.getElementById('toolbarOrderList');
-      const basicItemOrderList = document.getElementById('basicItemOrderList');
+      const toolbarPanelRefs = {};
+      let activeSettingsTab = 'general';
+
+      function setActiveSettingsTab(tabId) {
+        activeSettingsTab = tabId;
+        settingsTabs.querySelectorAll('.modal-tab-btn').forEach((btn) => {
+          const isActive = btn.dataset.settingsTab === tabId;
+          btn.classList.toggle('active', isActive);
+          btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+        settingsModalBody.querySelectorAll('.tab-panel').forEach((panel) => {
+          panel.classList.toggle('active', panel.dataset.tabPanel === tabId);
+        });
+      }
+
+      function initSettingsTabs() {
+        settingsTabs.addEventListener('click', (e) => {
+          const btn = e.target.closest('.modal-tab-btn');
+          if (!btn) return;
+          setActiveSettingsTab(btn.dataset.settingsTab);
+        });
+
+        TOOLBAR_ITEM_SCHEMAS.forEach((schema) => {
+          const meta = TOOLBAR_META[schema.id];
+
+          const tabBtn = document.createElement('button');
+          tabBtn.type = 'button';
+          tabBtn.className = 'modal-tab-btn';
+          tabBtn.setAttribute('role', 'tab');
+          tabBtn.setAttribute('aria-selected', 'false');
+          tabBtn.dataset.settingsTab = schema.id;
+          tabBtn.textContent = meta.tabLabel || meta.label;
+          settingsTabs.appendChild(tabBtn);
+
+          const panel = document.createElement('div');
+          panel.className = 'tab-panel';
+          panel.setAttribute('role', 'tabpanel');
+          panel.dataset.tabPanel = schema.id;
+
+          const notice = document.createElement('div');
+          notice.className = 'toolbar-hidden-notice';
+          notice.style.display = 'none';
+
+          const noticeText = document.createElement('span');
+          noticeText.textContent = `「${meta.label}」目前未顯示，可至「一般設定」或點擊右側按鈕啟用。`;
+
+          const enableBtn = document.createElement('button');
+          enableBtn.type = 'button';
+          enableBtn.className = 'mini-btn';
+          enableBtn.textContent = '立即啟用';
+          enableBtn.addEventListener('click', () => {
+            const tb = config.toolbars.find((t) => t.id === schema.id);
+            if (tb) tb.enabled = true;
+            saveConfig();
+            renderToolbars();
+            renderSettingsLists();
+            showToast(`已啟用${meta.label}`);
+          });
+
+          notice.appendChild(noticeText);
+          notice.appendChild(enableBtn);
+          panel.appendChild(notice);
+
+          const section = document.createElement('div');
+          section.className = 'setting-section';
+
+          const headerRow = document.createElement('div');
+          headerRow.className = 'section-header-row';
+
+          const heading = document.createElement('h4');
+          heading.textContent = `${meta.label}按鈕自訂（勾選顯示與排序）`;
+
+          const actions = document.createElement('div');
+          actions.className = 'section-actions';
+
+          const selectAllBtn = document.createElement('button');
+          selectAllBtn.type = 'button';
+          selectAllBtn.className = 'mini-btn';
+          selectAllBtn.textContent = '全選';
+          selectAllBtn.addEventListener('click', () => {
+            config[schema.configKey].forEach((item) => {
+              item.enabled = true;
+            });
+            saveConfig();
+            renderToolbars();
+            renderSettingsLists();
+          });
+
+          const clearAllBtn = document.createElement('button');
+          clearAllBtn.type = 'button';
+          clearAllBtn.className = 'mini-btn';
+          clearAllBtn.textContent = '全不選';
+          clearAllBtn.addEventListener('click', () => {
+            config[schema.configKey].forEach((item) => {
+              item.enabled = false;
+            });
+            saveConfig();
+            renderToolbars();
+            renderSettingsLists();
+          });
+
+          const resetTabBtn = document.createElement('button');
+          resetTabBtn.type = 'button';
+          resetTabBtn.className = 'mini-btn';
+          resetTabBtn.textContent = '還原預設';
+          resetTabBtn.addEventListener('click', () => {
+            config[schema.configKey] = DEFAULT_CONFIG[schema.configKey].map((item) => ({ ...item }));
+            saveConfig();
+            renderToolbars();
+            renderSettingsLists();
+            showToast(`已還原${meta.label}按鈕預設設定`);
+          });
+
+          actions.appendChild(selectAllBtn);
+          actions.appendChild(clearAllBtn);
+          actions.appendChild(resetTabBtn);
+
+          headerRow.appendChild(heading);
+          headerRow.appendChild(actions);
+
+          const grid = document.createElement('div');
+          grid.className = schema.isSymbol ? 'sortable-grid symbol-grid' : 'sortable-grid';
+
+          section.appendChild(headerRow);
+          section.appendChild(grid);
+          panel.appendChild(section);
+          settingsModalBody.appendChild(panel);
+
+          toolbarPanelRefs[schema.id] = { notice, grid };
+        });
+      }
+
+      initSettingsTabs();
 
       function openSettingsModal() {
         renderSettingsLists();
+        setActiveSettingsTab(activeSettingsTab);
         settingsModal.classList.add('open');
       }
 
@@ -1917,7 +2164,7 @@
         showToast('已復原為預設工具列與外觀設定');
       });
 
-      function buildSortableList(container, items, metaMap, onUpdate) {
+      function buildSortableList(container, items, metaMap, onUpdate, options = {}) {
         container.innerHTML = '';
         let dragSrcIndex = null;
 
@@ -1942,7 +2189,10 @@
           });
 
           const text = document.createElement('span');
-          text.textContent = metaMap[item.id] ? metaMap[item.id].label : item.id;
+          if (options.isSymbol) {
+            text.className = 'sym-preview';
+          }
+          text.textContent = metaMap && metaMap[item.id] ? metaMap[item.id].label : item.id;
 
           left.appendChild(handle);
           left.appendChild(cb);
@@ -2004,15 +2254,38 @@
         });
       }
 
+      function updateToolbarHiddenNotices() {
+        TOOLBAR_ITEM_SCHEMAS.forEach((schema) => {
+          const refs = toolbarPanelRefs[schema.id];
+          if (!refs) return;
+          const tb = config.toolbars.find((t) => t.id === schema.id);
+          refs.notice.style.display = tb && tb.enabled ? 'none' : 'flex';
+        });
+      }
+
       function renderSettingsLists() {
         buildSortableList(toolbarOrderList, config.toolbars, TOOLBAR_META, () => {
           saveConfig();
           renderToolbars();
+          updateToolbarHiddenNotices();
         });
-        buildSortableList(basicItemOrderList, config.basicItems, BASIC_ITEM_META, () => {
-          saveConfig();
-          renderToolbars();
+
+        TOOLBAR_ITEM_SCHEMAS.forEach((schema) => {
+          const refs = toolbarPanelRefs[schema.id];
+          if (!refs) return;
+          buildSortableList(
+            refs.grid,
+            config[schema.configKey],
+            schema.meta,
+            () => {
+              saveConfig();
+              renderToolbars();
+            },
+            { isSymbol: schema.isSymbol }
+          );
         });
+
+        updateToolbarHiddenNotices();
       }
 
       // =========================================================================

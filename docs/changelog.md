@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased] - 2026-11-15
 
 ### Added
+- **全工具列按鈕自訂與分頁設定**：
+  - 設定頁面新增分頁（Tabs）架構：「一般設定」、「基本排版」、「中文標點」、「英文標點」、「其他符號」、「注音符號」。
+  - 除基本排版外，中文標點、英文標點、其他符號與注音符號工具列亦支援個別按鈕的勾選顯示與拖曳／上下鍵排序，並保留 `localStorage` 設定相容性。
+  - 各工具列分頁新增「全選」、「全不選」、「還原預設」快捷按鈕，以及工具列隱藏時的「立即啟用」提示列。
 - **GitHub 發布與外部嵌入支援文件**：
   - 新增 LICENSE（MIT 授權，附 Quill 2 BSD-3-Clause 條款宣告）。
   - 新增 README.md，提供 GitHub Pages 嵌入範例與 window.postMessage 雙向通訊 API 規格文件。
@@ -19,6 +23,7 @@ All notable changes to this project will be documented in this file.
   - 剪貼簿寫入改用 `copy` 事件 + `clipboardData.setData()`，避免 Chromium `ClipboardItem` 清洗樣式；保留 `ClipboardItem` 作為備援。
 
 ### Changed
+- **全畫面設定頁面與響應式格線**：將設定彈窗改為全畫面顯示（四周保留 `5px` 邊距），並將 `.sortable-grid` 改為 `auto-fill` 多欄響應式排列以善用畫面空間。
 - `getRichHtmlContent()` 改為輸出語意化、自帶行內樣式的 HTML（亦用於 `editor:change` / `editor:getContent`）。
 
 ### Notes
