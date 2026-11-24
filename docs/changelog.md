@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - 2026-11-24
 
+### Changed
+- **固定工具列與獨立捲動文字編輯區（`editor.html`）**：
+  - 單獨開啟 `editor.html`（`window.self === window.top`）時自動套用 `standalone-layout` 類別，將視窗與 `.editor-shell` 鎖定為 `100%` / `100dvh` 高度，改由 `.editor-area-wrap` 獨立垂直捲動，使工具列、搜尋與取代列及手機底部快捷列固定於畫面不隨內容移動。
+  - 為 `.toolbars-container` 加上 `position: sticky; top: 0; z-index: 20; flex-shrink: 0;`，同時保留 `<iframe>` 嵌入模式下的 `editor:resize` 自動高度回報機制。
+  - 新增 `.editor-scroll-content` 包裹層並調整 `renderFindHighlights` 以 `findHighlightLayer` 計算相對座標，確保文字區捲動時搜尋高亮覆蓋層仍正確隨文字捲動對齊。
+
 ### Added
 - **搜尋與取代功能（`editor.html`）**：
   - 於基本排版工具列新增 `搜尋與取代`（`findReplace`）按鈕，並支援於設定頁面自訂顯示與排序。

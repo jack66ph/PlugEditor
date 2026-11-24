@@ -111,8 +111,23 @@
       box-shadow: var(--shadow-sm);
     }
 
+    html.standalone-layout,
+    html.standalone-layout body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    html.standalone-layout .editor-shell {
+      height: 100%;
+      height: 100dvh;
+    }
+
     /* Toolbars Container */
     .toolbars-container {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      flex-shrink: 0;
       display: flex;
       flex-direction: column;
       background: var(--bg-toolbar);
@@ -333,6 +348,7 @@
 
     /* Find & Replace Bar */
     .find-replace-bar {
+      flex-shrink: 0;
       display: flex;
       flex-direction: column;
       gap: 5px;
@@ -480,6 +496,32 @@
       background: var(--bg-editor);
       border-bottom-left-radius: 8px;
       border-bottom-right-radius: 8px;
+    }
+
+    html.standalone-layout .editor-area-wrap {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      scrollbar-color: var(--scrollbar-thumb) transparent;
+    }
+
+    .editor-scroll-content {
+      position: relative;
+      flex: 1 0 auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .editor-scroll-content .ql-container.ql-snow {
+      flex: 1 0 auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .editor-scroll-content .ql-editor {
+      flex: 1 0 auto;
     }
 
     .editor-area-wrap.format-painter-active .ql-editor {
@@ -1209,6 +1251,7 @@
     }
 
     [data-layout="mobile"] .mobile-bottom-bar {
+      flex-shrink: 0;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -1322,8 +1365,10 @@
       </div>
     </div>
     <div class="editor-area-wrap" id="editorAreaWrap">
-      <div class="find-highlight-layer" id="findHighlightLayer"></div>
-      <div id="quillEditor"></div>
+      <div class="editor-scroll-content" id="editorScrollContent">
+        <div class="find-highlight-layer" id="findHighlightLayer"></div>
+        <div id="quillEditor"></div>
+      </div>
     </div>
     <div class="mobile-bottom-bar" id="mobileBottomBar"></div>
   </div>
@@ -1406,6 +1451,10 @@
   <script>
     (function () {
       'use strict';
+
+      if (window.self === window.top) {
+        document.documentElement.classList.add('standalone-layout');
+      }
 
       const STORAGE_KEY = 'plugeditor_config_v1';
 
@@ -3301,7 +3350,7 @@
         findHighlightLayer.innerHTML = '';
         if (!isFindReplaceOpen() || findMatches.length === 0) return;
 
-        const wrapRect = editorAreaWrap.getBoundingClientRect();
+        const layerRect = findHighlightLayer.getBoundingClientRect();
         let activeRectEl = null;
 
         findMatches.forEach((m, idx) => {
@@ -3310,8 +3359,8 @@
           rects.forEach((r) => {
             const el = document.createElement('div');
             el.className = 'find-highlight-rect' + (isActive ? ' active' : '');
-            el.style.left = `${r.left - wrapRect.left}px`;
-            el.style.top = `${r.top - wrapRect.top}px`;
+            el.style.left = `${r.left - layerRect.left}px`;
+            el.style.top = `${r.top - layerRect.top}px`;
             el.style.width = `${r.width}px`;
             el.style.height = `${r.height}px`;
             findHighlightLayer.appendChild(el);
