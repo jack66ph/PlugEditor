@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased] - 2026-11-24
+
+### Added
+- **搜尋與取代功能（`editor.html`）**：
+  - 於基本排版工具列新增 `搜尋與取代`（`findReplace`）按鈕，並支援於設定頁面自訂顯示與排序。
+  - 新增 `#findReplaceBar` 面板與鍵盤快捷鍵：`Ctrl+F` / `Cmd+F` 開啟搜尋（自動帶入單行選取文字）、`Ctrl+H` / `Cmd+H` 開啟並聚焦取代欄、`Enter` / `Shift+Enter` 跳至下／上一筆、`Esc` 關閉面板。
+  - 支援即時搜尋、符合筆數計數（`1 / N`、`無結果`）、區分大小寫切換（`Aa`）、單筆取代與全部取代（保留原有行內格式，且全部取代採單一 Quill `Delta` 可一次 `Ctrl+Z` 復原）。
+  - 新增 `#findHighlightLayer` 非侵入式高亮覆蓋層，不改動文件 Delta、Undo 歷史與匯出結果，並完整支援白天／黑夜／護眼主題與手機版面（`data-layout="mobile"`）。
+
 ## [Unreleased] - 2026-11-15
 
 ### Added
@@ -30,6 +39,11 @@ All notable changes to this project will be documented in this file.
   - 剪貼簿寫入改用 `copy` 事件 + `clipboardData.setData()`，避免 Chromium `ClipboardItem` 清洗樣式；保留 `ClipboardItem` 作為備援。
 
 ### Changed
+- **手機版工具列精簡與彈窗互動優化**：
+  - 頂部分頁標籤改為單字呈現：`基`（基本排版）、`標`（合併中文／英文標點，預設中文）、`他`（其他符號）、`注`（注音符號）。
+  - 所有手機版工具列統一為單列排版且間隙縮小為 `1px`，取消左右滑動，改以列尾 `...` 按鈕開啟彈出視窗選取溢出工具。
+  - 手機版基本工具列將字型與字體大小合併為 `T` 按鈕（點擊後彈窗同時調整），純文字／富文字按鈕簡化為 `txt`／`rtx`。
+  - 修正設定視窗按鈕排序：補齊觸控拖曳（`.drag-handle`）、修正 `↑` / `↓` 按鈕事件與 `.sort-arrows .mini-btn` 樣式範圍。
 - **全畫面設定頁面與響應式格線**：將設定彈窗改為全畫面顯示（四周保留 `5px` 邊距），並將 `.sortable-grid` 改為 `auto-fill` 多欄響應式排列以善用畫面空間。
 - `getRichHtmlContent()` 改為輸出語意化、自帶行內樣式的 HTML（亦用於 `editor:change` / `editor:getContent`）。
 

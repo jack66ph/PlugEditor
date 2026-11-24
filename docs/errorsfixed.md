@@ -45,6 +45,15 @@
 - **問題**：新增「版面模式」卡片（`#layoutOptions`）並沿用 `.theme-card` 樣式時，`applyTheme()` 原先以 `document.querySelectorAll('.theme-card')` 更新 `active` 狀態，會誤將 `#layoutOptions` 內卡片的 `active` 樣式清除。
 - **修正**：將 `applyTheme()` 的選取器限縮為 `#themeOptions .theme-card`，並由 `applyLayout()` 獨立維護 `#layoutOptions .theme-card` 的 `active` 狀態。
 
+### 8. 手機版底部快捷列複製函式引用錯誤
+- **問題**：初版手機版底部快捷列呼叫了未定義的 `copyPlainText` / `copyRichHtml` / `copyMarkdown`。
+- **修正**：改為直接透過 `createBasicItemElement('copyText' | 'copyRich' | 'copyMd')` 建立按鈕，共用既有的 `copyTextToClipboard` 與 `copyRichToClipboard` 實作（手機版顯示 `txt` / `rtx` / `MD`）。
+
+### 9. 設定視窗按鈕排序於手機／拖曳操作無效
+- **問題**：設定頁面中拖曳或點擊 `↑` / `↓` 調整順序時無效，且手機版 `.mini-btn` 樣式誤影響操作按鈕。
+- **原因**：HTML5 `draggable="true"` 在觸控裝置不會觸發標準拖曳事件，且父層 `draggable` 會干擾子按鈕點擊；`.mini-btn` 寬高樣式未限縮於 `.sort-arrows`。
+- **修正**：為 `↑` / `↓` 按鈕加上 `draggable = false` 與 `stopPropagation()`；於 `.drag-handle` 實作 `touchstart`/`touchmove`/`touchend` 觸控拖曳排序；將手機版固定寬高樣式限縮為 `.sort-arrows .mini-btn`，並在 `renderSettingsLists()` 重繪前後保留捲動位置。
+
 ---
 
 *本次開發過程無其他語法報錯或執行期錯誤。*

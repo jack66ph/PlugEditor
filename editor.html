@@ -331,6 +331,149 @@
       cursor: pointer;
     }
 
+    /* Find & Replace Bar */
+    .find-replace-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      padding: 6px 8px;
+      background: var(--bg-toolbar);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .find-replace-bar[hidden] {
+      display: none !important;
+    }
+
+    .fr-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .fr-input-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 150px;
+      display: flex;
+      align-items: center;
+    }
+
+    .fr-input {
+      width: 100%;
+      height: 28px;
+      padding: 0 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 5px;
+      background: var(--bg-input);
+      color: var(--text-primary);
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+    }
+
+    .fr-input:focus {
+      border-color: var(--accent);
+    }
+
+    #findInput {
+      padding-right: 58px;
+    }
+
+    .fr-count {
+      position: absolute;
+      right: 8px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .fr-count.no-match {
+      color: var(--danger);
+    }
+
+    .fr-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .fr-opt-btn {
+      font-size: 12px;
+      font-weight: 600;
+      min-width: 28px;
+    }
+
+    .fr-action-btn {
+      height: 28px;
+      padding: 0 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 5px;
+      background: var(--bg-editor);
+      color: var(--text-primary);
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.12s ease, border-color 0.12s ease;
+    }
+
+    .fr-action-btn:hover:not(:disabled) {
+      background: var(--bg-toolbar-hover);
+    }
+
+    .fr-action-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .find-highlight-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 3;
+    }
+
+    .find-highlight-rect {
+      position: absolute;
+      background: rgba(250, 204, 21, 0.36);
+      border-radius: 2px;
+    }
+
+    .find-highlight-rect.active {
+      background: rgba(249, 115, 22, 0.42);
+      outline: 1.5px solid #f97316;
+    }
+
+    [data-theme="dark"] .find-highlight-rect {
+      background: rgba(250, 204, 21, 0.26);
+    }
+
+    [data-theme="dark"] .find-highlight-rect.active {
+      background: rgba(249, 115, 22, 0.44);
+      outline: 1.5px solid #fb923c;
+    }
+
+    [data-layout="mobile"] .fr-input {
+      height: 34px;
+      font-size: 14px;
+    }
+
+    [data-layout="mobile"] .fr-action-btn {
+      height: 34px;
+      padding: 0 10px;
+      font-size: 12.5px;
+    }
+
+    [data-layout="mobile"] .find-replace-bar .tb-btn {
+      min-width: 34px;
+      height: 34px;
+    }
+
     /* Quill Editor Area Overrides */
     .editor-area-wrap {
       position: relative;
@@ -1155,7 +1298,31 @@
 <body>
   <div class="editor-shell" id="editorShell">
     <div class="toolbars-container" id="toolbarsContainer"></div>
+    <div class="find-replace-bar" id="findReplaceBar" role="region" aria-label="搜尋與取代" hidden>
+      <div class="fr-row">
+        <div class="fr-input-wrap">
+          <input type="text" class="fr-input" id="findInput" placeholder="搜尋..." autocomplete="off" />
+          <span class="fr-count" id="findCount"></span>
+        </div>
+        <div class="fr-actions">
+          <button type="button" class="tb-btn fr-opt-btn" id="findCaseBtn" title="區分大小寫">Aa</button>
+          <button type="button" class="tb-btn" id="findPrevBtn" title="上一個 (Shift+Enter)">↑</button>
+          <button type="button" class="tb-btn" id="findNextBtn" title="下一個 (Enter)">↓</button>
+          <button type="button" class="tb-btn" id="closeFindBtn" title="關閉 (Esc)">✕</button>
+        </div>
+      </div>
+      <div class="fr-row">
+        <div class="fr-input-wrap">
+          <input type="text" class="fr-input" id="replaceInput" placeholder="取代為..." autocomplete="off" />
+        </div>
+        <div class="fr-actions">
+          <button type="button" class="fr-action-btn" id="replaceOneBtn" title="取代目前項目">取代</button>
+          <button type="button" class="fr-action-btn" id="replaceAllBtn" title="全部取代">全部取代</button>
+        </div>
+      </div>
+    </div>
     <div class="editor-area-wrap" id="editorAreaWrap">
+      <div class="find-highlight-layer" id="findHighlightLayer"></div>
       <div id="quillEditor"></div>
     </div>
     <div class="mobile-bottom-bar" id="mobileBottomBar"></div>
@@ -1318,6 +1485,7 @@
         paste: { label: '貼上' },
         undo: { label: '上一步' },
         redo: { label: '下一步' },
+        findReplace: { label: '搜尋與取代' },
         copyText: { label: '複製純文字' },
         copyRich: { label: '複製富文字' },
         copyMd: { label: '複製 Markdown' }
@@ -1359,6 +1527,7 @@
           { id: 'paste', enabled: true },
           { id: 'undo', enabled: true },
           { id: 'redo', enabled: true },
+          { id: 'findReplace', enabled: true },
           { id: 'copyText', enabled: true },
           { id: 'copyRich', enabled: true },
           { id: 'copyMd', enabled: true }
@@ -1960,6 +2129,7 @@
         paste: '<svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>',
         undo: '<svg viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>',
         redo: '<svg viewBox="0 0 24 24"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>',
+        findReplace: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
         settings: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>'
       };
 
@@ -2218,6 +2388,13 @@
               quill.history.redo();
             });
             break;
+          case 'findReplace':
+            btn.title = '搜尋與取代 (Ctrl+F / Ctrl+H)';
+            btn.innerHTML = ICONS.findReplace;
+            btn.addEventListener('click', () => {
+              toggleFindReplace();
+            });
+            break;
           case 'copyText':
             btn.title = '複製為純文字（含兩格空白縮排與清單符號）';
             btn.textContent = currentResolvedMobile ? 'txt' : '純文字';
@@ -2262,6 +2439,9 @@
         if (basicControlRefs.painter) {
           basicControlRefs.painter.classList.toggle('active', painterMode === 'once');
           basicControlRefs.painter.classList.toggle('locked', painterMode === 'locked');
+        }
+        if (basicControlRefs.findReplace) {
+          basicControlRefs.findReplace.classList.toggle('active', typeof isFindReplaceOpen === 'function' && isFindReplaceOpen());
         }
       }
 
@@ -3047,6 +3227,307 @@
       }
 
       // =========================================================================
+      // 10.5. Find & Replace
+      // =========================================================================
+      const findReplaceBar = document.getElementById('findReplaceBar');
+      const findInput = document.getElementById('findInput');
+      const replaceInput = document.getElementById('replaceInput');
+      const findCountEl = document.getElementById('findCount');
+      const findCaseBtn = document.getElementById('findCaseBtn');
+      const findPrevBtn = document.getElementById('findPrevBtn');
+      const findNextBtn = document.getElementById('findNextBtn');
+      const closeFindBtn = document.getElementById('closeFindBtn');
+      const replaceOneBtn = document.getElementById('replaceOneBtn');
+      const replaceAllBtn = document.getElementById('replaceAllBtn');
+      const findHighlightLayer = document.getElementById('findHighlightLayer');
+
+      const INLINE_FORMAT_KEYS = ['bold', 'italic', 'underline', 'strike', 'color', 'background', 'font', 'size'];
+
+      let findCaseSensitive = false;
+      let findMatches = [];
+      let activeMatchIndex = -1;
+
+      function isFindReplaceOpen() {
+        return !findReplaceBar.hidden;
+      }
+
+      function getSearchableText() {
+        const ops = quill.getContents().ops || [];
+        let text = '';
+        for (const op of ops) {
+          text += typeof op.insert === 'string' ? op.insert : '\uFFFC';
+        }
+        return text;
+      }
+
+      function getInlineFormatsAt(index) {
+        const fmt = quill.getFormat(index, 1);
+        const inlineFmt = {};
+        INLINE_FORMAT_KEYS.forEach((k) => {
+          if (fmt[k] !== undefined) inlineFmt[k] = fmt[k];
+        });
+        return inlineFmt;
+      }
+
+      function getMatchClientRects(index, length) {
+        try {
+          const [startLeaf, startOffset] = quill.getLeaf(index);
+          const [endLeaf, endOffset] = quill.getLeaf(index + length);
+          if (
+            startLeaf && startLeaf.domNode && startLeaf.domNode.nodeType === Node.TEXT_NODE &&
+            endLeaf && endLeaf.domNode && endLeaf.domNode.nodeType === Node.TEXT_NODE
+          ) {
+            const range = document.createRange();
+            range.setStart(startLeaf.domNode, Math.min(startOffset, startLeaf.domNode.length));
+            range.setEnd(endLeaf.domNode, Math.min(endOffset, endLeaf.domNode.length));
+            const rects = Array.from(range.getClientRects()).filter((r) => r.width > 0 && r.height > 0);
+            if (rects.length > 0) return rects;
+          }
+        } catch (e) {
+          // Fallback to Quill getBounds below
+        }
+        const b = quill.getBounds(index, length);
+        if (!b || b.width <= 0 || b.height <= 0) return [];
+        const containerRect = quill.container.getBoundingClientRect();
+        return [{
+          left: containerRect.left + b.left,
+          top: containerRect.top + b.top,
+          width: b.width,
+          height: b.height
+        }];
+      }
+
+      function renderFindHighlights(scrollToActive) {
+        findHighlightLayer.innerHTML = '';
+        if (!isFindReplaceOpen() || findMatches.length === 0) return;
+
+        const wrapRect = editorAreaWrap.getBoundingClientRect();
+        let activeRectEl = null;
+
+        findMatches.forEach((m, idx) => {
+          const isActive = idx === activeMatchIndex;
+          const rects = getMatchClientRects(m.index, m.length);
+          rects.forEach((r) => {
+            const el = document.createElement('div');
+            el.className = 'find-highlight-rect' + (isActive ? ' active' : '');
+            el.style.left = `${r.left - wrapRect.left}px`;
+            el.style.top = `${r.top - wrapRect.top}px`;
+            el.style.width = `${r.width}px`;
+            el.style.height = `${r.height}px`;
+            findHighlightLayer.appendChild(el);
+            if (isActive && !activeRectEl) activeRectEl = el;
+          });
+        });
+
+        if (scrollToActive && activeRectEl) {
+          activeRectEl.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        }
+      }
+
+      function updateFindControls() {
+        const query = findInput.value;
+        const hasMatches = findMatches.length > 0;
+
+        if (!query) {
+          findCountEl.textContent = '';
+          findCountEl.classList.remove('no-match');
+        } else if (!hasMatches) {
+          findCountEl.textContent = '無結果';
+          findCountEl.classList.add('no-match');
+        } else {
+          findCountEl.textContent = `${activeMatchIndex + 1} / ${findMatches.length}`;
+          findCountEl.classList.remove('no-match');
+        }
+
+        findPrevBtn.disabled = !hasMatches;
+        findNextBtn.disabled = !hasMatches;
+        replaceOneBtn.disabled = !hasMatches;
+        replaceAllBtn.disabled = !hasMatches;
+      }
+
+      function performFind(preserveIndex, scrollToActive) {
+        const query = findInput.value;
+        findMatches = [];
+
+        if (!query || !isFindReplaceOpen()) {
+          activeMatchIndex = -1;
+          updateFindControls();
+          renderFindHighlights(false);
+          return;
+        }
+
+        const text = getSearchableText();
+        const haystack = findCaseSensitive ? text : text.toLowerCase();
+        const needle = findCaseSensitive ? query : query.toLowerCase();
+
+        let pos = 0;
+        while (pos <= haystack.length - needle.length) {
+          const foundAt = haystack.indexOf(needle, pos);
+          if (foundAt === -1) break;
+          findMatches.push({ index: foundAt, length: query.length });
+          pos = foundAt + needle.length;
+        }
+
+        if (findMatches.length === 0) {
+          activeMatchIndex = -1;
+        } else if (preserveIndex && activeMatchIndex >= 0) {
+          activeMatchIndex = Math.min(activeMatchIndex, findMatches.length - 1);
+        } else {
+          const sel = quill.getSelection();
+          const cursorIdx = sel ? sel.index : 0;
+          const nextIdx = findMatches.findIndex((m) => m.index >= cursorIdx);
+          activeMatchIndex = nextIdx !== -1 ? nextIdx : 0;
+        }
+
+        updateFindControls();
+        renderFindHighlights(Boolean(scrollToActive));
+      }
+
+      function navigateMatch(step) {
+        if (findMatches.length === 0) return;
+        activeMatchIndex = (activeMatchIndex + step + findMatches.length) % findMatches.length;
+        updateFindControls();
+        renderFindHighlights(true);
+      }
+
+      function replaceCurrentMatch() {
+        if (findMatches.length === 0 || activeMatchIndex < 0) return;
+        const match = findMatches[activeMatchIndex];
+        const replacement = replaceInput.value;
+        const inlineFmt = getInlineFormatsAt(match.index);
+
+        quill.deleteText(match.index, match.length, 'user');
+        if (replacement.length > 0) {
+          quill.insertText(match.index, replacement, inlineFmt, 'user');
+        }
+
+        performFind(true, true);
+      }
+
+      function replaceAllMatches() {
+        if (findMatches.length === 0) return;
+        const replacement = replaceInput.value;
+        const count = findMatches.length;
+        const Delta = Quill.import('delta');
+        const delta = new Delta();
+        let cursor = 0;
+
+        for (const m of findMatches) {
+          if (m.index > cursor) {
+            delta.retain(m.index - cursor);
+          }
+          delta.delete(m.length);
+          if (replacement.length > 0) {
+            const inlineFmt = getInlineFormatsAt(m.index);
+            delta.insert(replacement, Object.keys(inlineFmt).length ? inlineFmt : undefined);
+          }
+          cursor = m.index + m.length;
+        }
+
+        quill.updateContents(delta, 'user');
+        performFind(false, false);
+        showToast(`已取代 ${count} 處`);
+      }
+
+      function openFindReplace(focusReplace) {
+        const wasHidden = findReplaceBar.hidden;
+        if (wasHidden) {
+          findReplaceBar.hidden = false;
+          updateToolbarActiveStates();
+          notifyHeight();
+        }
+
+        const sel = quill.getSelection();
+        if (sel && sel.length > 0) {
+          const selected = quill.getText(sel.index, sel.length);
+          if (selected && !selected.includes('\n') && selected.length <= 120) {
+            findInput.value = selected;
+          }
+        }
+
+        performFind(false, true);
+
+        if (focusReplace && findInput.value) {
+          replaceInput.focus();
+          replaceInput.select();
+        } else {
+          findInput.focus();
+          findInput.select();
+        }
+      }
+
+      function closeFindReplace() {
+        if (findReplaceBar.hidden) return;
+        findReplaceBar.hidden = true;
+        findHighlightLayer.innerHTML = '';
+        updateToolbarActiveStates();
+        notifyHeight();
+        quill.focus();
+      }
+
+      function toggleFindReplace() {
+        if (isFindReplaceOpen()) {
+          closeFindReplace();
+        } else {
+          openFindReplace(false);
+        }
+      }
+
+      findInput.addEventListener('input', () => performFind(false, true));
+      findInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          navigateMatch(e.shiftKey ? -1 : 1);
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          closeFindReplace();
+        }
+      });
+
+      replaceInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          replaceCurrentMatch();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          closeFindReplace();
+        }
+      });
+
+      findCaseBtn.addEventListener('click', () => {
+        findCaseSensitive = !findCaseSensitive;
+        findCaseBtn.classList.toggle('active', findCaseSensitive);
+        performFind(false, true);
+      });
+      findPrevBtn.addEventListener('click', () => navigateMatch(-1));
+      findNextBtn.addEventListener('click', () => navigateMatch(1));
+      closeFindBtn.addEventListener('click', closeFindReplace);
+      replaceOneBtn.addEventListener('click', replaceCurrentMatch);
+      replaceAllBtn.addEventListener('click', replaceAllMatches);
+
+      document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && !e.altKey) {
+          const key = e.key.toLowerCase();
+          if (key === 'f') {
+            e.preventDefault();
+            openFindReplace(false);
+          } else if (key === 'h') {
+            e.preventDefault();
+            openFindReplace(true);
+          }
+        } else if (e.key === 'Escape' && isFindReplaceOpen()) {
+          closeFindReplace();
+        }
+      });
+
+      window.addEventListener('resize', () => {
+        if (isFindReplaceOpen()) renderFindHighlights(false);
+      });
+      quill.root.addEventListener('scroll', () => {
+        if (isFindReplaceOpen()) renderFindHighlights(false);
+      });
+
+      // =========================================================================
       // 11. window.postMessage Communication Interface (for <iframe> embedding)
       // =========================================================================
       let changeTimer = null;
@@ -3077,6 +3558,9 @@
 
       quill.on('text-change', (_delta, _oldDelta, source) => {
         updateToolbarActiveStates();
+        if (isFindReplaceOpen()) {
+          performFind(true, false);
+        }
         notifyHeight();
         if (source === 'user') {
           clearTimeout(changeTimer);
