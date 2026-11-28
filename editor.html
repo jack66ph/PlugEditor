@@ -576,6 +576,7 @@
 
     .ql-editor li[data-list="bullet"] {
       padding-left: 1.6em;
+      counter-set: list-0 0 list-1 0 list-2 0 list-3 0 list-4 0 list-5 0;
     }
 
     .ql-editor li[data-list="bullet"]::before {
@@ -608,8 +609,9 @@
     /* Custom 6-level Hierarchical Ordered List: 1. / 1.1. / 1.1.1. ... */
     .ql-editor li[data-list="ordered"] {
       padding-left: 2.2em;
+      counter-reset: none;
       counter-increment: list-0;
-      counter-reset: list-1 list-2 list-3 list-4 list-5;
+      counter-set: list-1 0 list-2 0 list-3 0 list-4 0 list-5 0;
     }
 
     .ql-editor li[data-list="ordered"]::before {
@@ -624,8 +626,9 @@
 
     .ql-editor li[data-list="ordered"].ql-indent-1 {
       padding-left: calc(2ch + 2.8em) !important;
+      counter-reset: none;
       counter-increment: list-1;
-      counter-reset: list-2 list-3 list-4 list-5;
+      counter-set: list-2 0 list-3 0 list-4 0 list-5 0;
     }
     .ql-editor li[data-list="ordered"].ql-indent-1::before {
       content: counter(list-0) '.' counter(list-1) '. ';
@@ -635,8 +638,9 @@
 
     .ql-editor li[data-list="ordered"].ql-indent-2 {
       padding-left: calc(4ch + 3.6em) !important;
+      counter-reset: none;
       counter-increment: list-2;
-      counter-reset: list-3 list-4 list-5;
+      counter-set: list-3 0 list-4 0 list-5 0;
     }
     .ql-editor li[data-list="ordered"].ql-indent-2::before {
       content: counter(list-0) '.' counter(list-1) '.' counter(list-2) '. ';
@@ -646,8 +650,9 @@
 
     .ql-editor li[data-list="ordered"].ql-indent-3 {
       padding-left: calc(6ch + 4.4em) !important;
+      counter-reset: none;
       counter-increment: list-3;
-      counter-reset: list-4 list-5;
+      counter-set: list-4 0 list-5 0;
     }
     .ql-editor li[data-list="ordered"].ql-indent-3::before {
       content: counter(list-0) '.' counter(list-1) '.' counter(list-2) '.' counter(list-3) '. ';
@@ -657,8 +662,9 @@
 
     .ql-editor li[data-list="ordered"].ql-indent-4 {
       padding-left: calc(8ch + 5.2em) !important;
+      counter-reset: none;
       counter-increment: list-4;
-      counter-reset: list-5;
+      counter-set: list-5 0;
     }
     .ql-editor li[data-list="ordered"].ql-indent-4::before {
       content: counter(list-0) '.' counter(list-1) '.' counter(list-2) '.' counter(list-3) '.' counter(list-4) '. ';
@@ -668,7 +674,9 @@
 
     .ql-editor li[data-list="ordered"].ql-indent-5 {
       padding-left: calc(10ch + 6.0em) !important;
+      counter-reset: none;
       counter-increment: list-5;
+      counter-set: none;
     }
     .ql-editor li[data-list="ordered"].ql-indent-5::before {
       content: counter(list-0) '.' counter(list-1) '.' counter(list-2) '.' counter(list-3) '.' counter(list-4) '.' counter(list-5) '. ';
